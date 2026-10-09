@@ -1,0 +1,980 @@
+/* ═══════════════════════════════════════════════════════════════
+ *  عارض الاختبار — نفس شاشة الاختبار بالتطبيق (lib/quiz.dart)
+ *  برتقالي الاختبار #FF6B35 → #FF8E53، بطاقات بيضا، مراجعة أخضر/أحمر.
+ *  القواعد: بلا gap للفليكس، بلا inset، بلا خصائص منطقية، بلا
+ *  aspect-ratio، وكل var() قبلو قيمة احتياطية للمتصفحات القديمة.
+ *  الصفحة دايماً يمين→يسار: الهوامش الفيزيائية مقصودة.
+ * ═══════════════════════════════════════════════════════════════ */
+
+.viewer-quiz {
+  --q-bg: #F1F5F9;
+  --q-card: #FFFFFF;
+  --q-ink: #1F2937;
+  --q-ink-soft: #374151;
+  --q-muted: #757575;
+  --q-line: #E5E7EB;
+  --q-opt-bg: #FFFFFF;
+  --q-letter-bg: #F9FAFB;
+  --q-letter-ink: #374151;
+  --q-radio-line: #D1D5DB;
+  --q-foot: #FFFFFF;
+  --q-grab: #E5E7EB;
+  --q-sec-bg: #F3F4F6;
+  --q-sec-line: #E5E7EB;
+  --q-sec-ink: #111827;
+  --q-ok-bg: #DCFCE7;
+  --q-ok-line: #A7F3D0;
+  --q-bad-bg: #FEE2E2;
+  --q-bad-line: #FECACA;
+  --q-hint-bg: #FFFBEB;
+  --q-hint-line: #FDE68A;
+  --q-hint-ink: #92400E;
+  --q-hintbtn-bg: #FFFBEB;
+  --q-hintbtn-line: #FEF3C7;
+  --q-img-bg: #F3F4F6;
+  --q-dialog: #FFFFFF;
+  --q-accent-ink: #EA580C;
+  --q-shadow: 0 8px 14px rgba(0, 0, 0, 0.12);
+  --q-shadow-soft: 0 4px 8px rgba(0, 0, 0, 0.08);
+
+  display: block;
+  min-height: 100vh;
+  background: #F1F5F9;
+  background: var(--q-bg);
+  color: #1F2937;
+  color: var(--q-ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .viewer-quiz {
+    --q-bg: #0B1220;
+    --q-card: #111827;
+    --q-ink: #F1F5F9;
+    --q-ink-soft: #CBD5E1;
+    --q-muted: #94A3B8;
+    --q-line: #273244;
+    --q-opt-bg: #0F172A;
+    --q-letter-bg: #1E293B;
+    --q-letter-ink: #E2E8F0;
+    --q-radio-line: #475569;
+    --q-foot: #0F172A;
+    --q-grab: #334155;
+    --q-sec-bg: #1E293B;
+    --q-sec-line: #334155;
+    --q-sec-ink: #F1F5F9;
+    --q-ok-bg: rgba(16, 185, 129, 0.16);
+    --q-ok-line: rgba(16, 185, 129, 0.55);
+    --q-bad-bg: rgba(239, 68, 68, 0.14);
+    --q-bad-line: rgba(239, 68, 68, 0.5);
+    --q-hint-bg: rgba(245, 158, 11, 0.12);
+    --q-hint-line: rgba(245, 158, 11, 0.45);
+    --q-hint-ink: #FCD34D;
+    --q-hintbtn-bg: rgba(245, 158, 11, 0.14);
+    --q-hintbtn-line: rgba(245, 158, 11, 0.35);
+    --q-img-bg: #1E293B;
+    --q-dialog: #111827;
+    --q-accent-ink: #FF9A6B;
+    --q-shadow: 0 8px 14px rgba(0, 0, 0, 0.35);
+    --q-shadow-soft: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] .viewer-quiz {
+  --q-bg: #0B1220;
+  --q-card: #111827;
+  --q-ink: #F1F5F9;
+  --q-ink-soft: #CBD5E1;
+  --q-muted: #94A3B8;
+  --q-line: #273244;
+  --q-opt-bg: #0F172A;
+  --q-letter-bg: #1E293B;
+  --q-letter-ink: #E2E8F0;
+  --q-radio-line: #475569;
+  --q-foot: #0F172A;
+  --q-grab: #334155;
+  --q-sec-bg: #1E293B;
+  --q-sec-line: #334155;
+  --q-sec-ink: #F1F5F9;
+  --q-ok-bg: rgba(16, 185, 129, 0.16);
+  --q-ok-line: rgba(16, 185, 129, 0.55);
+  --q-bad-bg: rgba(239, 68, 68, 0.14);
+  --q-bad-line: rgba(239, 68, 68, 0.5);
+  --q-hint-bg: rgba(245, 158, 11, 0.12);
+  --q-hint-line: rgba(245, 158, 11, 0.45);
+  --q-hint-ink: #FCD34D;
+  --q-hintbtn-bg: rgba(245, 158, 11, 0.14);
+  --q-hintbtn-line: rgba(245, 158, 11, 0.35);
+  --q-img-bg: #1E293B;
+  --q-dialog: #111827;
+  --q-accent-ink: #FF9A6B;
+  --q-shadow: 0 8px 14px rgba(0, 0, 0, 0.35);
+  --q-shadow-soft: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.viewer-quiz *,
+.viewer-quiz *:before,
+.viewer-quiz *:after {
+  box-sizing: border-box;
+}
+.viewer-quiz button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.viewer-quiz .q-ic {
+  display: block;
+  fill: currentColor;
+}
+.viewer-quiz button:focus,
+.viewer-quiz a:focus {
+  outline: 3px solid rgba(255, 107, 53, 0.55);
+  outline-offset: 2px;
+}
+.viewer-quiz button:focus:not(:focus-visible),
+.viewer-quiz a:focus:not(:focus-visible) {
+  outline: none;
+}
+/* التنقّل بالكيبورد: ما يختبي الزر المركّز تحت الترويسة اللاصقة أو التذييل الثابت */
+.viewer-quiz .q-opt,
+.viewer-quiz .q-hint-btn {
+  scroll-margin-top: 112px;
+  scroll-margin-bottom: 100px;
+  scroll-margin-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+.viewer-quiz .q-head button:focus {
+  outline-color: #FFFFFF;
+}
+.q-list:focus,
+.q-stripe:focus {
+  outline: none;
+}
+.q-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ─────────── الترويسة ─────────── */
+.q-head {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  color: #FFFFFF;
+  background: #FF6B35;
+  background: linear-gradient(135deg, #FF6B35, #FF8E53);
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+}
+.q-head-in {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 16px 12px;
+}
+.q-row1 {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+.q-row1 > button:first-child {
+  flex: 0 0 auto;
+}
+.q-back-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  font-size: 20px;
+  cursor: pointer;
+}
+.q-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 12px;
+  text-align: center;
+}
+.q-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.q-sub {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.q-time {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  transition: background-color 0.3s;
+}
+.q-st-empty .q-time,
+.q-st-error .q-time {
+  visibility: hidden;
+}
+.q-time.is-low {
+  background: rgba(185, 28, 28, 0.42);
+  border-color: rgba(255, 255, 255, 0.6);
+  animation: q-blink 1s ease-in-out infinite alternate;
+}
+.q-ring {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+}
+.q-ring-bg,
+.q-ring-fg {
+  fill: none;
+  stroke-width: 3;
+}
+.q-ring-bg {
+  stroke: rgba(255, 255, 255, 0.25);
+}
+.q-ring-fg {
+  stroke: #FFFFFF;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s;
+}
+.q-time-txt {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+.q-row2 {
+  display: none;
+  align-items: center;
+  margin-top: 10px;
+}
+.q-st-quiz .q-row2,
+.q-st-review .q-row2 {
+  display: flex;
+}
+.q-bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.22);
+}
+.q-bar-fill {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: 6px;
+  background: #FFFFFF;
+  transition: width 0.25s ease-out;
+}
+.q-count {
+  flex: 0 0 auto;
+  margin-right: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* ─────────── الجسم ─────────── */
+.q-body {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 14px 16px 24px;
+}
+.q-st-quiz .q-body,
+.q-st-review .q-body {
+  padding-bottom: 120px;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+.q-wait {
+  padding: 48px 0;
+  text-align: center;
+}
+
+.q-state {
+  margin-top: 12px;
+  padding: 32px 18px;
+  text-align: center;
+  border-radius: 20px;
+  background: #FFFFFF;
+  background: var(--q-card);
+  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid var(--q-line);
+}
+.q-state .q-state-ic {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto;
+  fill: #FF6B35;
+}
+.q-state-t {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.q-state-m {
+  margin: 6px 0 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #757575;
+  color: var(--q-muted);
+}
+
+/* ─────────── بطاقة السؤال ─────────── */
+.q-card {
+  margin: 0 0 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  background: var(--q-card);
+  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid var(--q-line);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--q-shadow);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.q-card.is-ok {
+  background: #DCFCE7;
+  background: var(--q-ok-bg);
+  border-color: #A7F3D0;
+  border-color: var(--q-ok-line);
+}
+.q-card.is-bad {
+  background: #FEE2E2;
+  background: var(--q-bad-bg);
+  border-color: #FECACA;
+  border-color: var(--q-bad-line);
+}
+.q-card-hd {
+  display: flex;
+  align-items: center;
+}
+.q-num {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FF6B35;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.q-card.is-ok .q-num {
+  background: #10B981;
+}
+.q-card.is-bad .q-num {
+  background: #EF4444;
+}
+.q-kind {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #757575;
+  color: var(--q-muted);
+}
+.q-hint-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 8px 0 0;
+  padding: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #F59E0B;
+  background: #FFFBEB;
+  background: var(--q-hintbtn-bg);
+  border: 1.5px solid #FEF3C7;
+  border: 1.5px solid var(--q-hintbtn-line);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--q-shadow-soft);
+}
+.q-hint-btn[aria-expanded="true"] {
+  border-color: #F59E0B;
+}
+.q-hint-btn .q-ic {
+  width: 22px;
+  height: 22px;
+}
+
+.q-img {
+  margin-top: 12px;
+  min-height: 72px;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: center;
+  background: #F3F4F6;
+  background: var(--q-img-bg);
+}
+.q-img.is-loaded {
+  min-height: 0;
+}
+.q-img img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  max-height: 260px;
+  width: auto;
+  height: auto;
+}
+
+.q-text {
+  margin-top: 14px;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.55;
+  text-align: center;
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  color: #1F2937;
+  color: var(--q-ink);
+}
+
+.q-hintbox {
+  display: none;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #92400E;
+  color: var(--q-hint-ink);
+  background: #FFFBEB;
+  background: var(--q-hint-bg);
+  border: 1.5px solid #FDE68A;
+  border: 1.5px solid var(--q-hint-line);
+}
+.q-hintbox.is-open {
+  display: flex;
+}
+.q-hintbox .q-ic {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-left: 10px;
+  fill: #F59E0B;
+}
+.q-hint-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  text-align: right;
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ─────────── الخيارات ─────────── */
+.q-opts {
+  margin-top: 14px;
+}
+.q-opt {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  margin: 0 0 12px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: right;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  color: #1F2937;
+  color: var(--q-ink);
+  background: #FFFFFF;
+  background: var(--q-opt-bg);
+  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid var(--q-line);
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.q-opt:last-child {
+  margin-bottom: 0;
+}
+.q-st-quiz .q-opt:active {
+  transform: scale(0.985);
+}
+@media (hover: hover) {
+  .q-st-quiz .q-opt:hover {
+    border-color: #FDBA9B;
+  }
+}
+.q-radio {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 12px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  background: var(--q-opt-bg);
+  border: 2.5px solid #D1D5DB;
+  border: 2.5px solid var(--q-radio-line);
+}
+.q-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+}
+.q-letter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 12px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  color: #374151;
+  color: var(--q-letter-ink);
+  background: #F9FAFB;
+  background: var(--q-letter-bg);
+  border: 1.4px solid #E5E7EB;
+  border: 1.4px solid var(--q-line);
+}
+.q-otext {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.q-opt.is-sel,
+.q-opt.is-right,
+.q-opt.is-wrong {
+  color: #FFFFFF;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.16);
+}
+.q-opt.is-sel {
+  background: #FF6B35;
+  background: linear-gradient(to right, #FF6B35, #FF8E53);
+  border-color: transparent;
+}
+.q-opt.is-right {
+  background: #10B981;
+  background: linear-gradient(to right, #10B981, #059669);
+  border-color: #10B981;
+}
+.q-opt.is-wrong {
+  background: #EF4444;
+  background: linear-gradient(to right, #EF4444, #DC2626);
+  border-color: #EF4444;
+}
+.q-opt.is-sel .q-radio,
+.q-opt.is-right .q-radio,
+.q-opt.is-wrong .q-radio {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #FFFFFF;
+}
+/* النقطة بالدائرة = اختيار الطالب بس (بالمراجعة الأخضر لحالو ما بيعني إنك اخترته) */
+.q-opt.is-sel .q-dot,
+.q-opt.is-mine .q-dot {
+  background: #FFFFFF;
+}
+.q-opt.is-sel .q-letter,
+.q-opt.is-right .q-letter,
+.q-opt.is-wrong .q-letter {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.q-st-review .q-opt {
+  cursor: default;
+}
+
+/* ─────────── شريط النتيجة ─────────── */
+.q-stripe {
+  margin: 2px 0 14px;
+  padding: 16px;
+  border-radius: 18px;
+  text-align: center;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+}
+.q-stripe-t {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.q-stripe-m {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.q-stripe-s {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.q-band-hi {
+  background: #10B981;
+  background: linear-gradient(to right, #10B981, #059669);
+}
+.q-band-mid {
+  /* الأبيض عالأصفر ما بينقرا — حبر غامق */
+  color: #422006;
+  background: #FACC15;
+  background: linear-gradient(to right, #FACC15, #EAB308);
+}
+.q-band-lo {
+  background: #EF4444;
+  background: linear-gradient(to right, #EF4444, #DC2626);
+}
+
+/* ─────────── التذييل الثابت ─────────── */
+.q-foot {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  background: #FFFFFF;
+  background: var(--q-foot);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.14);
+}
+.q-st-quiz .q-foot,
+.q-st-review .q-foot {
+  display: block;
+}
+.q-foot-in {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4px 16px 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+.q-grab {
+  width: 42px;
+  height: 5px;
+  margin: 4px auto 10px;
+  border-radius: 3px;
+  background: #E5E7EB;
+  background: var(--q-grab);
+}
+.q-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 16px;
+  background: #FF6B35;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.q-submit:active {
+  background: #F25A22;
+}
+.q-submit.is-pop {
+  animation: q-pop 0.24s ease-out;
+}
+.q-send-ic {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  /* أيقونة الإرسال بتنقلب باليمين→يسار متل التطبيق */
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+.q-foot-row {
+  display: flex;
+  align-items: stretch;
+}
+.q-again {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 16px;
+  margin-left: 10px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #111827;
+  color: var(--q-sec-ink);
+  background: #F3F4F6;
+  background: var(--q-sec-bg);
+  border: 1.2px solid #E5E7EB;
+  border: 1.2px solid var(--q-sec-line);
+}
+.q-again.is-wide {
+  flex: 1 1 auto;
+  margin-left: 0;
+}
+.q-again .q-ic {
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+}
+.q-app {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+.q-app > a,
+.q-app > button {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+}
+
+/* ─────────── الحوارات ─────────── */
+.q-ov {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(0, 0, 0, 0.54);
+  animation: q-fade 0.18s ease-out;
+}
+.q-dlg {
+  width: 100%;
+  max-width: 340px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 16px;
+  color: #1F2937;
+  color: var(--q-ink);
+  background: #FFFFFF;
+  background: var(--q-dialog);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+  animation: q-rise 0.2s ease-out;
+}
+.q-dlg-t {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.q-dlg-m {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #374151;
+  color: var(--q-ink-soft);
+}
+.q-dlg-m.is-lead {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1F2937;
+  color: var(--q-ink);
+}
+.q-dlg-acts {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.q-dlg-acts button {
+  min-height: 44px;
+  padding: 0 18px;
+  margin-right: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.q-dlg-acts button:first-child {
+  margin-right: 0;
+}
+.q-btn-text {
+  border: 0;
+  background: transparent;
+  color: #EA580C;
+  color: var(--q-accent-ink);
+}
+.q-btn-text.q-btn-danger {
+  color: #DC2626;
+}
+.q-btn-fill {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #FF6B35;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.q-res {
+  width: 100%;
+  max-width: 360px;
+  margin: auto;
+  padding: 22px 20px 18px;
+  border-radius: 20px;
+  text-align: center;
+  color: #FFFFFF;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+  animation: q-rise 0.22s ease-out;
+}
+/* «جيد» أصفر: الأبيض فوقه ما بينقرا، فالحبر غامق (أقوى من .q-res اللي بعد .q-band-mid) */
+.q-res.q-band-mid {
+  color: #422006;
+}
+.q-res-h {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.q-res-band {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.q-res-msg {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.q-res-score {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 800;
+}
+.q-res-time {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.q-res-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+}
+.q-res-acts button {
+  min-height: 44px;
+  margin: 4px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+.q-res-show {
+  border: 0;
+  background: #FFFFFF;
+  color: #FF6B35;
+}
+.q-res-again {
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  background: #FF6B35;
+  color: #FFFFFF;
+}
+.q-res .q-res-show:focus,
+.q-res .q-res-again:focus {
+  outline-color: #FFFFFF;
+}
+/* عالأصفر: حدّ الزر وحلقة التركيز بالغامق كي يبيّنوا */
+.q-res.q-band-mid .q-res-again {
+  border-color: rgba(66, 32, 6, 0.35);
+}
+.q-res.q-band-mid .q-res-show:focus,
+.q-res.q-band-mid .q-res-again:focus {
+  outline-color: #422006;
+}
+
+/* ─────────── حركات ─────────── */
+@keyframes q-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes q-rise {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes q-pop {
+  0% { transform: scale(0.95); }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+@keyframes q-blink {
+  from { opacity: 1; }
+  to { opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewer-quiz *,
+  .viewer-quiz *:before,
+  .viewer-quiz *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (min-width: 600px) {
+  .q-head-in {
+    padding: 12px 20px 14px;
+  }
+  .q-body {
+    padding: 18px 20px 28px;
+  }
+}

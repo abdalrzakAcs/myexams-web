@@ -1,0 +1,513 @@
+/* ═══════════════════════════════════════════════════════════════
+ *  عارض الـPDF — viewer-pdf.js (بينحمّل بس لما ينفتح درس ملف)
+ *  شاشة كاملة: شريط غامق فوق (رجوع · العنوان · عدّاد الصفحات)، وتحته
+ *  الصفحات بيضا تحت بعض على رمادي (غامق بالوضع الليلي)، وأزرار التكبير
+ *  طافية تحت عالشمال. بلا gap/inset/aspect-ratio (متصفحات قديمة).
+ * ═══════════════════════════════════════════════════════════════ */
+
+.vp {
+  --vp-bg: #E5E7EB;
+  --vp-card: #FFFFFF;
+  --vp-ink: #1F2937;
+  --vp-muted: #64748B;
+  --vp-ph: #FFFFFF;
+  --vp-ph-ink: #94A3B8;
+  --vp-shadow: 0 1px 2px rgba(15, 23, 42, 0.10), 0 6px 16px rgba(15, 23, 42, 0.08);
+  --vp-track: rgba(100, 116, 139, 0.22);
+  --vp-net-bg: #FFFBEB;
+  --vp-net-line: #FCD34D;
+  --vp-net-ink: #92400E;
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  background: #E5E7EB;
+  background: var(--vp-bg);
+  color: #1F2937;
+  color: var(--vp-ink);
+  font-family: inherit;
+  direction: rtl;
+  text-align: right;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .vp {
+    --vp-bg: #0B1220;
+    --vp-card: #0F172A;
+    --vp-ink: #F1F5F9;
+    --vp-muted: #94A3B8;
+    --vp-ph: #1E293B;
+    --vp-ph-ink: #64748B;
+    --vp-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
+    --vp-track: rgba(148, 163, 184, 0.22);
+    --vp-net-bg: rgba(245, 158, 11, 0.14);
+    --vp-net-line: rgba(245, 158, 11, 0.45);
+    --vp-net-ink: #FCD34D;
+  }
+}
+:root[data-theme="dark"] .vp {
+  --vp-bg: #0B1220;
+  --vp-card: #0F172A;
+  --vp-ink: #F1F5F9;
+  --vp-muted: #94A3B8;
+  --vp-ph: #1E293B;
+  --vp-ph-ink: #64748B;
+  --vp-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
+  --vp-track: rgba(148, 163, 184, 0.22);
+  --vp-net-bg: rgba(245, 158, 11, 0.14);
+  --vp-net-line: rgba(245, 158, 11, 0.45);
+  --vp-net-ink: #FCD34D;
+}
+
+.vp [hidden] {
+  display: none !important;
+}
+
+/* ─────────── الشريط العلوي (غامق بالوضعين) ─────────── */
+.vp-bar {
+  position: relative;
+  z-index: 3;
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  min-height: 60px;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: rgba(17, 24, 39, 0.92);
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+/* بالوضع الليلي الشريط والخلفية غامقين — خط رفيع بيفصلهن */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .vp-bar {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+:root[data-theme="dark"] .vp-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.vp-bar > button,
+.vp-bar > a {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+.vp-titles {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 10px;
+  text-align: right;
+}
+.vp-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: #FFFFFF;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp-sub {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp-pill {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  min-width: 58px;
+  padding: 7px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.26);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ─────────── منطقة الصفحات ─────────── */
+.vp-body {
+  position: relative;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.vp-scroll {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow-x: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+  /* الصفحات صور — اتجاه يسار→يمين بيخلّي التمرير الأفقي ثابت بكل المتصفحات */
+  direction: ltr;
+  text-align: center;
+  outline: none;
+}
+.vp-scroll:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(249, 115, 22, 0.55);
+}
+.vp-pages {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  min-width: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 10px 8px 96px;
+  text-align: left;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (min-width: 600px) {
+  .vp-pages {
+    padding: 16px 16px 96px;
+  }
+}
+.vp-page {
+  position: relative;
+  margin: 0 auto 10px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #FFFFFF;
+  background: var(--vp-ph);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10), 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--vp-shadow);
+}
+.vp-page.is-ready {
+  background: #FFFFFF;
+}
+.vp-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* علامة مائية خفيفة «ماي اكزامس» مكرّرة بالمايل — CSS بس، ما بتمسك اللمس */
+.vp-page.is-ready::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='190'%3E%3Cg%20font-family='Tahoma,Arial,sans-serif'%20font-size='19'%20font-weight='700'%20fill='%23000'%20text-anchor='middle'%3E%3Ctext%20x='80'%20y='62'%20transform='rotate(-28%2080%2056)'%3E%D9%85%D8%A7%D9%8A%20%D8%A7%D9%83%D8%B2%D8%A7%D9%85%D8%B3%3C/text%3E%3Ctext%20x='230'%20y='157'%20transform='rotate(-28%20230%20151)'%3E%D9%85%D8%A7%D9%8A%20%D8%A7%D9%83%D8%B2%D8%A7%D9%85%D8%B3%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 300px 190px;
+}
+.vp-pnum {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin-top: -14px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 28px;
+  color: #94A3B8;
+  color: var(--vp-ph-ink);
+  text-align: center;
+  direction: rtl;
+}
+.vp-page.is-loading .vp-pnum {
+  -webkit-animation: vp-pulse 1.2s ease-in-out infinite;
+  animation: vp-pulse 1.2s ease-in-out infinite;
+}
+.vp-page.is-failed .vp-pnum {
+  font-size: 13px;
+}
+@-webkit-keyframes vp-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@keyframes vp-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* ─────────── التحميل والأخطاء (فوق الصفحات) ─────────── */
+.vp-state {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  overflow: auto;
+  padding: 24px 16px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  background: #E5E7EB;
+  background: var(--vp-bg);
+  text-align: center;
+  direction: rtl;
+}
+.vp-card {
+  width: 100%;
+  max-width: 360px;
+  margin: auto;
+}
+.vp-load .mec-loading {
+  padding-bottom: 0;
+}
+.vp-prog {
+  width: 200px;
+  max-width: 80%;
+  height: 6px;
+  margin: 14px auto 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(100, 116, 139, 0.22);
+  background: var(--vp-track);
+  direction: rtl;
+}
+.vp-prog-in {
+  width: 0;
+  height: 100%;
+  border-radius: 6px;
+  background: #F97316;
+  background: -webkit-linear-gradient(right, #F97316, #EA580C);
+  background: linear-gradient(to left, #F97316, #EA580C);
+  -webkit-transition: width 0.3s ease;
+  transition: width 0.3s ease;
+}
+.vp-hint {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #64748B;
+  color: var(--vp-muted);
+}
+.vp-msg {
+  padding: 26px 20px 22px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  background: var(--vp-card);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--vp-shadow);
+}
+.vp-errcard {
+  border-radius: 20px;
+  background: #FFFFFF;
+  background: var(--vp-card);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--vp-shadow);
+}
+.vp-msg .btn,
+.vp-errcard .btn {
+  max-width: 100%;
+}
+.vp-msg-ic {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: rgba(249, 115, 22, 0.12);
+}
+.vp-msg-ic svg {
+  width: 30px;
+  height: 30px;
+  fill: #EA580C;
+}
+.vp-msg-t {
+  margin: 0 0 18px;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.7;
+  color: #1F2937;
+  color: var(--vp-ink);
+}
+
+/* ─────────── شريط «النت ضعيف» بعد ما بانت الصفحات ─────────── */
+.vp-net {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  left: 10px;
+  z-index: 3;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 6px 12px 6px 6px;
+  border-radius: 12px;
+  border: 1px solid #FCD34D;
+  border-color: var(--vp-net-line);
+  background: #FFFBEB;
+  background: var(--vp-net-bg);
+  color: #92400E;
+  color: var(--vp-net-ink);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  direction: rtl;
+  text-align: right;
+}
+.vp-net-t {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 0 0 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.vp-net-btn {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  /* كهرماني غامق: الأبيض عليه ٥٫٠:١ (على #F59E0B كان ٢٫١٥:١ — ما بينقرا) */
+  background: #B45309;
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.vp-net-btn:focus-visible {
+  outline: 3px solid #92400E;
+  outline: 3px solid var(--vp-net-ink);
+  outline-offset: 2px;
+}
+
+/* ─────────── أزرار التكبير (تحت عالشمال) ─────────── */
+.vp-zoom {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  z-index: 3;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(17, 24, 39, 0.88);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.vp-zbtn {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #FFFFFF;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.vp-zbtn + .vp-zbtn {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.vp-zbtn svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+.vp-zbtn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.vp-zbtn.is-off {
+  opacity: 0.35;
+  cursor: default;
+}
+.vp-zbtn.is-off:active {
+  background: transparent;
+}
+.vp-zbtn:focus-visible {
+  outline: 3px solid #FDBA74;
+  outline-offset: -3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vp-page.is-loading .vp-pnum {
+    -webkit-animation: none;
+    animation: none;
+  }
+  .vp-prog-in {
+    -webkit-transition: none;
+    transition: none;
+  }
+}
+
+/* ما في طباعة للملفات من هون (متل التطبيق) */
+@media print {
+  .vp {
+    display: none !important;
+  }
+}

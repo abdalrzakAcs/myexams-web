@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data: blob:; font-src 'self' data:; connect-src 'self' https://nfqlfgiujcsccktqcpuh.supabase.co; frame-src https://www.youtube-nocookie.com https://www.youtube.com; media-src 'self' https: blob:; worker-src 'self' blob:; base-uri 'self'; form-action 'none'; object-src 'none'">
+<meta name="mec-share" content="1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دورات على ماي اكزامس</title>
+<meta name="description" content="دورات وملخصات واختبارات من أساتذة وجامعات ومدارس — على تطبيق ماي اكزامس.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F97316" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- معاينة الروابط (واتساب/فيسبوك/تلغرام): الزواحف ما بتشغّل جافاسكربت وبدها
+     عناوين كاملة، فـ https://abdalrzakacs.github.io/myexams-web/ بيتبدّل بعنوان الموقع الحقيقي وقت
+     البناء (node _tools/build.mjs --base …). على كلاودفلير كمان بيبدّله
+     functions/_middleware.js لحاله. -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_SY">
+<meta property="og:site_name" content="My Exams">
+<meta property="og:title" content="دورات على ماي اكزامس">
+<meta property="og:description" content="دورات وملخصات واختبارات من أساتذة وجامعات ومدارس — على تطبيق ماي اكزامس.">
+<meta property="og:url" content="https://abdalrzakacs.github.io/myexams-web/">
+<meta property="og:image" content="https://abdalrzakacs.github.io/myexams-web/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="My Exams — دورات وملخصات واختبارات">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="دورات على ماي اكزامس">
+<meta name="twitter:description" content="دورات وملخصات واختبارات من أساتذة وجامعات ومدارس — على تطبيق ماي اكزامس.">
+<meta name="twitter:image" content="https://abdalrzakacs.github.io/myexams-web/assets/og.png">
+
+<!-- أوّل اتصال بالسيرفر بيبلّش مع الصفحة (DNS + TLS) بدل ما يستنّى السكربت -->
+<link rel="preconnect" href="https://nfqlfgiujcsccktqcpuh.supabase.co" crossorigin>
+<link rel="preload" href="assets/fonts/cairo-extrabold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css?v=ded66aeaea">
+</head>
+<body>
+<a class="skip" href="#app">انتقل للمحتوى</a>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./" aria-label="My Exams — الصفحة الرئيسية">
+      <img class="brand-logo" src="assets/logo-72.png" width="34" height="34" alt="">
+      <span class="brand-mark" dir="ltr">My Exams</span>
+    </a>
+    <a class="btn btn-sm btn-soft" id="topDownload" href="#" hidden>
+      <span class="btn-label">حمّل التطبيق</span>
+    </a>
+  </div>
+</header>
+
+<main id="app" class="page" aria-busy="true">
+  <div class="skeleton" aria-hidden="true">
+    <span class="sk sk-hero"></span>
+    <span class="sk sk-line sk-title w80"></span>
+    <span class="sk sk-line w50"></span>
+    <div class="card sk-card">
+      <div class="sk-row">
+        <span class="sk sk-avatar"></span>
+        <span class="sk-col">
+          <span class="sk sk-line w60"></span>
+          <span class="sk sk-line w40"></span>
+        </span>
+      </div>
+    </div>
+    <span class="sk sk-tabs"></span>
+    <span class="sk sk-lesson"></span>
+    <span class="sk sk-lesson"></span>
+  </div>
+  <p class="sr-only">عم نجيب التفاصيل…</p>
+</main>
+
+<div class="cta" id="cta" hidden>
+  <div class="cta-in">
+    <div class="cta-notes" id="ctaNotes" aria-live="polite"></div>
+    <div class="cta-buttons" id="ctaButtons"></div>
+  </div>
+</div>
+
+<footer class="footer" id="footer">
+  <img src="assets/logo-72.png" width="28" height="28" alt="">
+  <p>ماي اكزامس — منصة تعليمية سورية: دورات وملخصات واختبارات من أساتذة وجامعات ومدارس.</p>
+</footer>
+
+<noscript>
+  <div class="noscript">لازم تشغّل الجافاسكربت لتشوف الصفحة، أو حمّل التطبيق مباشرة.</div>
+</noscript>
+
+<script src="config.js?v=ded66aeaea" defer></script>
+<script src="app.js?v=ded66aeaea" defer></script>
+</body>
+</html>
