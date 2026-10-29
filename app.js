@@ -74,28 +74,20 @@ currency: 'ل.س جديدة',
 payShamCash: 'الدفع بشام كاش',
 discount: function (n) { return 'خصم ' + n + '٪'; },
 discountUntil: function (d, m) { return 'الخصم لحدّ ' + d + ' ' + m; },
-noDesc: 'الناشر ما كتب وصف لهالدورة لسا.',
 allCourses: function (n) { return 'شوف كل دورات ' + n; },
 publisherFallback: 'ناشر',
 untitled: 'دورة بلا عنوان',
 share: 'شارك الدورة',
-shareSub: 'ابعت الرابط لرفقاتك',
 by: 'الناشر',
 options: 'خياراتك',
-fullPrice: 'سعر الدورة كاملة',
-allOpen: 'كل دروسها مفتوحة',
 tryFree: 'جرّب مجاناً',
 startFirst: 'ابدأ أول درس',
 tryFreeTail: '» بينفتح هون مباشرة، بلا تسجيل',
 buyCourse: 'اشتري الدورة كاملة',
 buySub: 'بشام كاش أو بكود تفعيل — من التطبيق',
 openSub: 'وكمّل كل دروسها من هناك',
-factLesson: 'درس',
-factLessons: 'دروس',
-factPages: 'صفحة',
-factFree: 'مجاني',
-factStudents: 'طالب',
-factRating: function (n) { return plural(n, 'تقييم', 'تقييمات'); },
+pages: function (n) { return plural(n, 'صفحة', 'صفحات'); },
+students: function (n) { return plural(n, 'طالب', 'طلاب'); },
 all: 'الكل',
 tabsLabel: 'أنواع الدروس',
 tabs: { file: 'الملفات', video: 'الفيديو', quiz: 'الاختبارات' },
@@ -106,14 +98,13 @@ quiz: 'ما في اختبارات بهالدورة بعد',
 },
 noLessons: 'ما في دروس بهالدورة لهلق',
 noLessonsHint: 'أوّل ما يضيف الناشر دروسه رح تطلعلك هون.',
-freeStrip: function (n, all) {
-return 'فيك تفتح ' + (n === 1 ? 'درس مجاني واحد' : n === 2 ? 'درسين مجانيين' : plural(n, 'درس مجاني', 'دروس مجانية')) +
-' من هون مباشرة' + (all ? '.' : ' — الباقي بالتطبيق.');
-},
 type: { file: 'ملف', video: 'فيديو', quiz: 'اختبار' },
 lessonN: function (n) { return 'درس ' + n; },
-lockedTitle: 'محتوى مقفول',
+lockedKicker: 'من الدورة الكاملة',
 lockedText: 'افتحه بعد ما تشتري الدورة بشام كاش أو تفعّلها بكود — من التطبيق.',
+lockedPrice: function (p) { return 'بيفتح مع الدورة كاملة (' + p + ') — بشام كاش أو بكود من التطبيق.'; },
+sheetTryFree: '» مجاناً هون',
+sheetTryFreeHead: 'أو جرّب «',
 unavailable: 'هذا الدرس غير متاح حالياً — جرّب بعدين.',
 lockedSr: 'مقفول',
 back: 'رجوع',
@@ -1404,7 +1395,7 @@ img.src = url;
 box.appendChild(img);
 return box;
 }
-var KIND_CHIP = { university: 'chip-violet', school: 'chip-blue', individual: '', team: 'chip-teal' };
+var KIND_CHIP = { university: 'chip-grey', school: 'chip-grey', individual: '', team: 'chip-grey' };
 function kindChip(kind) {
 return el('span', 'chip ' + (KIND_CHIP[kind] || ''), T.kinds[kind] || T.kinds.individual);
 }
@@ -1418,9 +1409,9 @@ function kindChips(c) {
 var out = [];
 if (c.lessons > 0) out.push(chip(T.lessons(c.lessons), 'chip-grey', 'book'));
 c.kinds.forEach(function (k) {
-if (k === 'video') out.push(chip(T.kindVideo, '', 'video'));
-else if (k === 'file') out.push(chip(T.kindFile, 'chip-blue', 'file'));
-else if (k === 'quiz') out.push(chip(T.kindQuiz, 'chip-violet', 'quiz'));
+if (k === 'video') out.push(chip(T.kindVideo, 'chip-grey', 'video'));
+else if (k === 'file') out.push(chip(T.kindFile, 'chip-grey', 'file'));
+else if (k === 'quiz') out.push(chip(T.kindQuiz, 'chip-grey', 'quiz'));
 });
 return out.length ? add(el('div', 'chips'), out) : null;
 }
@@ -1549,7 +1540,7 @@ meta.appendChild(kindChip(pub.kind));
 if (pub.city) add(meta, add(el('span', 'city'), icon('place'), elAuto('span', '', pub.city)));
 var stats = [];
 if (pub.courses !== null) stats.push(T.courses(pub.courses));
-if (pub.followers !== null) stats.push(T.followers(pub.followers));
+if (pub.followers !== null && pub.followers >= 10) stats.push(T.followers(pub.followers));
 if (stats.length) meta.appendChild(el('span', '', stats.join(' · ')));
 add(info, name, meta);
 add(top, avatar(pub.logo, pub.name, pub.kind, 68), info);
@@ -1672,6 +1663,7 @@ function showNote(key) {
 if (!notesEl || notes[key]) return;
 notes[key] = noteNode(key);
 notesEl.appendChild(notes[key]);
+if (ctaEl) ctaEl.className = 'cta';
 refreshCta();
 if (key === 'copyField') {
 var f = notes[key].querySelector('.copy-field');
@@ -1711,7 +1703,7 @@ document.body.style.paddingBottom = h ? (h + 16) + 'px' : '';
 function setupTopDownload() {
 var a = document.getElementById('topDownload');
 if (!a) return;
-if (!canOfferDownload()) {
+if (!canOfferDownload() || page.kind === 'publisher') {
 a.hidden = true;
 return;
 }
@@ -1835,10 +1827,14 @@ return views[id] || (views[id] = { tab: '' });
 function beginRender(kind, id) {
 clearTimeout(slowTimer);
 closeSheet(false);
+if (page.refs.io) page.refs.io.disconnect();
+if (ctaEl) ctaEl.className = 'cta';
 clear(root);
 layoutQueue = [];
 root.className = 'page' + (kind === 'course' ? ' page-course' : '');
 page = { kind: kind, id: id || '', title: '', refs: {} };
+document.documentElement.setAttribute('data-page', kind);
+setupTopDownload();
 }
 function setBusy(b) {
 if (root) root.setAttribute('aria-busy', b ? 'true' : 'false');
@@ -1991,15 +1987,27 @@ setupCta(openButton(t, T.open, 'btn-primary'), true);
 finish();
 }
 var COVER_TONES = ['#9A4A2B', '#55652B', '#3B5468', '#6A3A5A', '#1E6560',
-'#9C6619', '#7A3A32', '#2E5946', '#474C78', '#7A5A38'];
+'#8A5A16', '#7A3A32', '#2E5946', '#474C78', '#7A5A38'];
 function coverTone(c) {
 var key = c.subject || c.subjectLabel || c.title || c.id || 'x';
 return COVER_TONES[stableHash(key) % COVER_TONES.length];
 }
-function pad2(n) {
-return n < 10 ? '0' + n : String(n);
+function heroSpec(c, m) {
+var list = m.lessons;
+var count = list ? list.length : c.lessons;
+var pages = 0;
+if (list) list.forEach(function (l) { if (l.kind === 'file') pages += l.pages; });
+var parts = [];
+if (count > 0) parts.push(T.lessons(count));
+if (pages >= 10) parts.push(T.pages(pages));
+if (c.rating !== null && c.rating > 0 && c.ratings >= 3) {
+parts.push('★ ' + (Math.round(c.rating * 10) / 10).toFixed(1));
+} else if (c.students >= 20) {
+parts.push(T.students(c.students));
 }
-function courseHero(c) {
+return parts.length ? el('p', 'ch-spec', parts.join(' · ')) : null;
+}
+function courseHero(c, m) {
 var box = el('header', 'ch');
 box.style.backgroundColor = coverTone(c);
 var mono = el('span', 'ch-mono', firstGrapheme(c.subject || c.subjectLabel || c.title || ''));
@@ -2019,19 +2027,12 @@ img.src = c.cover;
 box.appendChild(img);
 }
 box.appendChild(el('span', 'ch-scrim'));
-var share = el('button', 'ch-share');
-share.type = 'button';
-share.setAttribute('aria-label', T.share);
-share.setAttribute('title', T.share);
-share.appendChild(icon('share'));
-share.addEventListener('click', function () { shareCourse(c); });
-box.appendChild(share);
 var inner = el('div', 'ch-inner');
 var tree = metaParts(c).filter(function (t) {
 return t !== c.subject && (c.title || '').indexOf(t) < 0;
 });
 if (tree.length) inner.appendChild(metaNode('p', 'ch-eyebrow', tree));
-inner.appendChild(elAuto('h1', 'ch-title', c.title || T.untitled));
+add(inner, elAuto('h1', 'ch-title', c.title || T.untitled), heroSpec(c, m));
 box.appendChild(inner);
 return box;
 }
@@ -2051,39 +2052,10 @@ add(name, elAuto('span', 'cp-text', pub.name || T.publisherFallback), icon('veri
 var sub = [T.kinds[pub.kind] || T.kinds.individual];
 if (pub.city) sub.push(pub.city);
 if (pub.courses > 1) sub.push(T.courses(pub.courses));
-if (pub.followers > 0) sub.push(T.followers(pub.followers));
+if (pub.followers >= 10) sub.push(T.followers(pub.followers));
 add(info, el('span', 'cp-by', T.by), name, el('span', 'cp-sub', sub.join(' · ')));
 add(a, av, info, linked ? icon('chevron', 'cp-chev') : null);
 return a;
-}
-function factsRow(c, m) {
-var list = m.lessons;
-var count = list ? list.length : c.lessons;
-var pages = 0;
-var free = 0;
-if (list) {
-list.forEach(function (l) {
-if (l.kind === 'file') pages += l.pages;
-if (l.openable) free++;
-});
-}
-var cells = [];
-if (count > 0) cells.push([String(count), count === 1 ? T.factLesson : T.factLessons]);
-if (pages > 0) cells.push([String(pages), T.factPages]);
-if (c.price > 0 && free > 0) cells.push([String(free), T.factFree]);
-if (c.rating !== null && c.rating > 0 && c.ratings > 0) {
-cells.push([(Math.round(c.rating * 10) / 10).toFixed(1), T.factRating(c.ratings)]);
-} else if (c.students > 0) {
-cells.push([String(c.students), T.factStudents]);
-}
-if (!cells.length) return null;
-var row = el('dl', 'facts');
-cells.slice(0, 4).forEach(function (x) {
-var cell = el('div', 'fact');
-add(cell, el('dt', 'fact-l', x[1]), el('dd', 'fact-n', x[0]));
-row.appendChild(cell);
-});
-return row;
 }
 function firstOpen(list) {
 if (!list) return null;
@@ -2102,77 +2074,68 @@ node.type = 'button';
 node.addEventListener('click', o.onClick);
 }
 if (o.main) node.className += ' is-main';
-var ic = el('span', 'opt-ic');
-ic.appendChild(icon(o.icon));
 var body = el('span', 'opt-body');
 add(body, el('span', 'opt-title', o.title), o.subNode || (o.sub ? el('span', 'opt-sub', o.sub) : null));
-add(node, ic, body, icon('chevron', 'opt-chev'));
+add(node, body, o.end ? add(el('span', 'opt-end'), o.end) : null, icon('chevron', 'opt-chev'));
 return node;
 }
+function optPrice(c) {
+var w = el('span', 'opt-price');
+add(w, el('span', 'opt-price-now', money(discounted(c) ? c.priceNow : c.price)),
+el('span', 'opt-price-cur', T.currency),
+discounted(c) ? el('s', 'opt-price-old', money(c.price)) : null);
+return w;
+}
 function optionsBox(c, m, t) {
-var box = el('section', 'opt');
-box.setAttribute('aria-label', T.options);
-var head = el('div', 'opt-head');
-add(head, el('span', 'opt-label', c.price > 0 ? T.fullPrice : T.allOpen), priceEl(c, true));
-box.appendChild(head);
-var list = el('div', 'opt-list');
-var first = firstOpen(m.lessons);
+var sec = el('section', 'opt-wrap');
+sec.setAttribute('aria-labelledby', 'optTitle');
+var h = el('h2', 'sec-title', T.options);
+h.id = 'optTitle';
+var box = el('div', 'opt');
+var list = m.lessons;
+var first = firstOpen(list);
 if (first) {
-list.appendChild(optRow({
+box.appendChild(optRow({
 href: lessonHref(c.id, first.id),
 nav: true,
 main: true,
-icon: 'lockOpen',
 title: c.price > 0 ? T.tryFree : T.startFirst,
 subNode: add(el('span', 'opt-sub'), document.createTextNode('«'),
-elAuto('bdi', '', first.title || T.lessonN(1)), document.createTextNode(T.tryFreeTail)),
+elAuto('bdi', '', first.title || T.lessonN(list.indexOf(first) + 1)),
+document.createTextNode(T.tryFreeTail)),
+end: c.price > 0 ? el('span', 'row-free', T.free) : null,
 }));
 }
-list.appendChild(optRow({
+var sub = el('span', 'opt-sub', c.price > 0 ? T.buySub : T.openSub);
+if (discounted(c)) {
+var pct = c.discountPercent > 0 ? c.discountPercent : Math.round((1 - c.priceNow / c.price) * 100);
+var deal = T.discount(pct) + (c.discountUntil
+? ' · ' + T.discountUntil(c.discountUntil.getDate(), T.months[c.discountUntil.getMonth()]) : '');
+sub = add(el('span', 'opt-subs'), el('span', 'opt-sub opt-deal', deal), sub);
+}
+box.appendChild(optRow({
 onClick: function () { openInApp(t); },
-icon: 'open',
 title: c.price > 0 ? T.buyCourse : T.openCourse,
-sub: c.price > 0 ? T.buySub : T.openSub,
+subNode: sub,
+end: c.price > 0 ? optPrice(c) : null,
 }));
-list.appendChild(optRow({
-onClick: function () { shareCourse(c); },
-icon: 'share',
-title: T.share,
-sub: T.shareSub,
-}));
-box.appendChild(list);
-return box;
+var share = el('button', 'opt-share');
+share.type = 'button';
+add(share, icon('share'), el('span', '', T.share));
+share.addEventListener('click', function () { shareCourse(c); });
+add(sec, h, box, share);
+return sec;
 }
-function autoAbout(c, m) {
-var subject = c.subject || c.subjectLabel;
-var head = 'دورة';
-if (subject && (c.title || '').indexOf(subject) < 0) head += ' ' + subject;
-if (head === 'دورة' && m.publisher.name) head = 'دورة من ' + m.publisher.name;
-var list = m.lessons || [];
-var out;
-if (list.length === 1) {
-var one = list[0].kind === 'quiz' ? 'اختبار واحد' : list[0].kind === 'video' ? 'فيديو واحد' : 'ملف واحد';
-out = head + '، فيها ' + one + '.';
-} else {
-out = head === 'دورة' ? T.noDesc : head + '.';
-}
-var free = 0;
-list.forEach(function (l) { if (l.openable) free++; });
-if (c.price <= 0) out += ' والدورة كلها مجانية.';
-else if (free > 0) out += free === 1 ? ' وفيك تجرّب درسها المجاني قبل ما تشتري.' : ' وفيك تجرّب دروسها المجانية قبل ما تشتري.';
-return out;
-}
-function aboutBlock(c, m) {
+function aboutBlock(c) {
+if (!c.description) return null;
 var sec = el('section', 'cab');
-sec.appendChild(el('h2', 'sec-label', T.aboutCourse));
-if (c.description) sec.appendChild(clampText(c.description, 'desc'));
-else sec.appendChild(elAuto('p', 'desc', autoAbout(c, m)));
+add(sec, el('h2', 'sec-title', T.aboutCourse), clampText(c.description, 'desc'));
 return sec;
 }
 function lessonIcon(kind) {
 return kind === 'quiz' ? 'quiz' : kind === 'video' ? 'video' : 'pdf';
 }
-function lessonRow(l, idx, c, mode) {
+function lessonRow(l, idx, c, mode, free) {
 var li = el('li', 'syl-item');
 var node;
 var open = mode === 'live' && l.openable;
@@ -2184,22 +2147,21 @@ node.setAttribute('data-nav', '1');
 } else if (!plain) {
 node = el('button', 'row is-locked');
 node.type = 'button';
-node.addEventListener('click', function () { openSheet(l, node); });
+node.addEventListener('click', function () { openSheet(l, node, c, free); });
 } else {
 node = el('div', 'row is-plain');
 }
 if (l.id) node.setAttribute('data-lid', l.id);
 node.setAttribute('data-kind', l.kind);
-li.style.animationDelay = Math.min(idx, 10) * 40 + 'ms';
 var locked = !open && !plain;
-var num = el('span', 'row-n', pad2(idx + 1));
+var num = el('span', 'row-n', String(idx + 1));
 num.setAttribute('aria-hidden', 'true');
 var meta = el('span', 'row-meta');
 meta.appendChild(icon(lessonIcon(l.kind), 'row-ic'));
 var extra = [T.type[l.kind]];
-if (l.kind === 'file' && l.pages > 0) extra.push(l.pages + ' صفحة');
-if (l.kind === 'quiz' && l.questions > 0) extra.push(l.questions + ' سؤال');
-if (l.kind === 'quiz' && l.minutes > 0) extra.push(l.minutes + ' دقيقة');
+if (l.kind === 'file' && l.pages > 0) extra.push(plural(l.pages, 'صفحة', 'صفحات'));
+if (l.kind === 'quiz' && l.questions > 0) extra.push(plural(l.questions, 'سؤال', 'أسئلة'));
+if (l.kind === 'quiz' && l.minutes > 0) extra.push(plural(l.minutes, 'دقيقة', 'دقائق'));
 meta.appendChild(el('span', '', extra.join(' · ')));
 if (locked) meta.appendChild(el('span', 'sr-only', ' — ' + T.lockedSr));
 var body = el('span', 'row-body');
@@ -2215,14 +2177,18 @@ return li;
 function syllabus(list, groups, vs, c, mode) {
 var wrap = el('div', 'syl');
 var kinds = KINDS.filter(function (k) { return groups[k].length > 0; });
+var withFilter = kinds.length > 1 && list.length >= 8;
+var free = mode === 'live' ? firstOpen(list) : null;
 var ol = el('ol', 'syl-list');
 var items = list.map(function (l, i) {
-var li = lessonRow(l, i, c, mode);
+var li = lessonRow(l, i, c, mode, free);
 ol.appendChild(li);
 return li;
 });
 var chipsBy = {};
+var applied = 'all';
 var apply = function (k) {
+applied = k;
 var first = true;
 items.forEach(function (li, i) {
 var show = k === 'all' || list[i].kind === k;
@@ -2237,7 +2203,7 @@ chipsBy[key].className = 'syl-chip' + (key === k ? ' is-on' : '');
 }
 }
 };
-if (kinds.length > 1) {
+if (withFilter) {
 var bar = el('div', 'syl-filter');
 bar.setAttribute('role', 'group');
 bar.setAttribute('aria-label', T.tabsLabel);
@@ -2256,11 +2222,10 @@ bar.appendChild(b);
 wrap.appendChild(bar);
 }
 wrap.appendChild(ol);
-var start = kinds.length > 1 && vs.tab && (vs.tab === 'all' || groups[vs.tab] && groups[vs.tab].length) ? vs.tab : 'all';
+var start = withFilter && vs.tab && (vs.tab === 'all' || groups[vs.tab] && groups[vs.tab].length) ? vs.tab : 'all';
 apply(start);
 page.refs.selectTab = function (k) {
-var cur = vs.tab || 'all';
-if (cur === 'all' || cur === k) return;
+if (applied === 'all' || applied === k) return;
 vs.tab = 'all';
 apply('all');
 };
@@ -2325,16 +2290,10 @@ return sec;
 }
 h.appendChild(el('span', 'sec-count', T.lessons(list.length)));
 var groups = { file: [], video: [], quiz: [] };
-var openCount = 0;
 list.forEach(function (l, i) {
 groups[l.kind].push(l);
 l.n = i + 1;
-if (l.openable) openCount++;
 });
-if (mode === 'live' && openCount > 0 && c.price > 0) {
-sec.appendChild(add(el('p', 'syl-note'), icon('lockOpen'),
-el('span', '', T.freeStrip(openCount, openCount === list.length))));
-}
 sec.appendChild(syllabus(list, groups, vs, c, mode));
 return sec;
 }
@@ -2355,22 +2314,33 @@ refs.stale = el('div', 'slot');
 refs.note = el('div', 'slot');
 if (r.lessonNote) refs.note.appendChild(noteBanner(T.lessonNotHere));
 add(root,
-courseHero(c),
+courseHero(c, m),
 refs.stale,
 cameBackBanner(t),
 refs.note,
 pubLine(pub),
-factsRow(c, m),
 optionsBox(c, m, t),
-aboutBlock(c, m),
+aboutBlock(c),
 lessonsSection(ent, m, vs),
 pub.id ? allCoursesLink(pub) : null);
 updateStale(ent);
 page.title = T.titleCourse(c.title || T.untitled, pub.name);
 document.title = page.title;
 setupCta(openButton(t, T.openCourse, 'btn-primary'), true);
+tuckCtaNearOptions();
 finish();
 handleLesson(ent, r);
+}
+function tuckCtaNearOptions() {
+var opt = root.querySelector('.opt');
+if (!window.IntersectionObserver || !opt || !ctaEl) return;
+var io = new window.IntersectionObserver(function (es) {
+var e = es[es.length - 1];
+var tuck = e.isIntersecting && e.intersectionRatio >= 0.5 && !(notesEl && notesEl.firstChild);
+ctaEl.className = 'cta' + (tuck ? ' is-tucked' : '');
+}, { rootMargin: '0px 0px -90px 0px', threshold: [0, 0.5, 1] });
+io.observe(opt);
+page.refs.io = io;
 }
 function lessonsSettled(ent) {
 var m = ent.model;
@@ -2404,7 +2374,7 @@ if (all[i].offsetWidth || all[i].offsetHeight) out.push(all[i]);
 }
 return out;
 }
-function openSheet(l, opener) {
+function openSheet(l, opener, c, free) {
 closeSheet(false);
 var back = el('div', 'sheet-backdrop');
 var box = el('div', 'sheet');
@@ -2415,12 +2385,21 @@ box.setAttribute('aria-describedby', 'sheetText');
 box.setAttribute('tabindex', '-1');
 var grab = el('span', 'sheet-grab');
 grab.setAttribute('aria-hidden', 'true');
-var head = el('div', 'sheet-head');
-var title = el('h2', 'sheet-title', T.lockedTitle);
+var kicker = add(el('p', 'sheet-kicker'), icon('lock'), el('span', '', T.lockedKicker));
+var title = elAuto('h2', 'sheet-title', l.title || T.lessonN(l.n));
 title.id = 'sheetTitle';
-add(head, icon('lock', 'sheet-lock'), title);
-var text = el('p', 'sheet-text', l.avail === false ? T.unavailable : T.lockedText);
+var price = c && c.price > 0 ? money(discounted(c) ? c.priceNow : c.price) + ' ' + T.currency : '';
+var text = el('p', 'sheet-text', l.avail === false ? T.unavailable : price ? T.lockedPrice(price) : T.lockedText);
 text.id = 'sheetText';
+var tryFree = null;
+if (c && free && free.id && free.id !== l.id) {
+tryFree = el('a', 'link-btn sheet-free');
+tryFree.href = lessonHref(c.id, free.id);
+tryFree.setAttribute('data-nav', '1');
+add(tryFree, document.createTextNode(T.sheetTryFreeHead), elAuto('bdi', '', free.title || T.lessonN(free.n)),
+document.createTextNode(T.sheetTryFree));
+tryFree.addEventListener('click', function () { closeSheet(false); });
+}
 var btns = el('div', 'sheet-buttons');
 var openB = openButton(currentTarget(), T.open, 'btn-primary btn-block');
 openB.addEventListener('click', function () { closeSheet(false); });
@@ -2429,8 +2408,8 @@ if (dl) dl.addEventListener('click', function () { closeSheet(false); });
 var cancel = el('button', 'sheet-cancel', T.back);
 cancel.type = 'button';
 cancel.addEventListener('click', function () { closeSheet(true); });
-add(btns, openB, dl, cancel);
-add(box, grab, head, elAuto('p', 'sheet-lesson', l.title || T.lessonN(l.n)), text, btns);
+add(btns, openB, dl, tryFree, cancel);
+add(box, grab, kicker, title, text, btns);
 back.appendChild(box);
 back.addEventListener('click', function (ev) {
 if (ev.target === back) closeSheet(true);
@@ -2701,7 +2680,6 @@ course: { id: c.id, title: c.title || T.untitled, publisherName: m.publisher.nam
 back: function () { viewerBack(v); },
 ref: REF,
 };
-viewState(c.id).tab = l.kind;
 var host = el('div', 'viewer viewer-' + l.kind + (l.kind === 'file' ? ' viewer-pdf' : ''));
 host.setAttribute('tabindex', '-1');
 v.host = host;
