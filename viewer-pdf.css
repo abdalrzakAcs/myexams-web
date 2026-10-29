@@ -8,7 +8,7 @@
 .vp {
   --vp-bg: #E5E7EB;
   --vp-card: #FFFFFF;
-  --vp-ink: #1F2937;
+  --vp-ink: #201B16;
   --vp-muted: #64748B;
   --vp-ph: #FFFFFF;
   --vp-ph-ink: #94A3B8;
@@ -32,7 +32,7 @@
   flex-direction: column;
   background: #E5E7EB;
   background: var(--vp-bg);
-  color: #1F2937;
+  color: #201B16;
   color: var(--vp-ink);
   font-family: inherit;
   direction: rtl;
@@ -41,11 +41,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .vp {
-    --vp-bg: #0B1220;
-    --vp-card: #0F172A;
+    --vp-bg: #14110E;
+    --vp-card: #1C1915;
     --vp-ink: #F1F5F9;
     --vp-muted: #94A3B8;
-    --vp-ph: #1E293B;
+    --vp-ph: #2A2521;
     --vp-ph-ink: #64748B;
     --vp-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
     --vp-track: rgba(148, 163, 184, 0.22);
@@ -55,11 +55,11 @@
   }
 }
 :root[data-theme="dark"] .vp {
-  --vp-bg: #0B1220;
-  --vp-card: #0F172A;
+  --vp-bg: #14110E;
+  --vp-card: #1C1915;
   --vp-ink: #F1F5F9;
   --vp-muted: #94A3B8;
-  --vp-ph: #1E293B;
+  --vp-ph: #2A2521;
   --vp-ph-ink: #64748B;
   --vp-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
   --vp-track: rgba(148, 163, 184, 0.22);
@@ -375,7 +375,7 @@
   font-size: 15px;
   font-weight: 800;
   line-height: 1.7;
-  color: #1F2937;
+  color: #201B16;
   color: var(--vp-ink);
 }
 

@@ -13,7 +13,7 @@ nameAr: 'ماي اكزامس',
 tagline: 'تعلّم · اختبر · تميّز',
 },
 track: true,
-assetVersion: 'ded66aeaea',
+assetVersion: 'bcc0a01391',
 };
 (function () {
 var done = false;

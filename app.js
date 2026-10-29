@@ -79,6 +79,24 @@ allCourses: function (n) { return 'شوف كل دورات ' + n; },
 publisherFallback: 'ناشر',
 untitled: 'دورة بلا عنوان',
 share: 'شارك الدورة',
+shareSub: 'ابعت الرابط لرفقاتك',
+by: 'الناشر',
+options: 'خياراتك',
+fullPrice: 'سعر الدورة كاملة',
+allOpen: 'كل دروسها مفتوحة',
+tryFree: 'جرّب مجاناً',
+startFirst: 'ابدأ أول درس',
+tryFreeTail: '» بينفتح هون مباشرة، بلا تسجيل',
+buyCourse: 'اشتري الدورة كاملة',
+buySub: 'بشام كاش أو بكود تفعيل — من التطبيق',
+openSub: 'وكمّل كل دروسها من هناك',
+factLesson: 'درس',
+factLessons: 'دروس',
+factPages: 'صفحة',
+factFree: 'مجاني',
+factStudents: 'طالب',
+factRating: function (n) { return plural(n, 'تقييم', 'تقييمات'); },
+all: 'الكل',
 tabsLabel: 'أنواع الدروس',
 tabs: { file: 'الملفات', video: 'الفيديو', quiz: 'الاختبارات' },
 emptyTab: {
@@ -1427,7 +1445,10 @@ node.setAttribute('data-nav', '1');
 node.setAttribute('tabindex', '-1');
 node.setAttribute('aria-hidden', 'true');
 }
-node.appendChild(icon('book', 'glyph'));
+node.style.backgroundColor = coverTone(c);
+var mono = el('span', 'cover-mono', firstGrapheme(c.subject || c.subjectLabel || c.title || ''));
+mono.setAttribute('aria-hidden', 'true');
+node.appendChild(mono);
 if (c.cover) {
 var img = el('img');
 img.alt = '';
@@ -1535,28 +1556,6 @@ add(top, avatar(pub.logo, pub.name, pub.kind, 68), info);
 card.appendChild(top);
 if (pub.about) card.appendChild(clampText(pub.about, 'pub-about'));
 return card;
-}
-function publisherMini(pub) {
-var a = el('a', 'card pub-mini');
-a.href = localHref('publisher', pub.id);
-a.setAttribute('data-nav', '1');
-var ring = el('span', 'pub-ring');
-var av = avatar(pub.logo, pub.name, pub.kind, 48);
-av.removeAttribute('role');
-av.setAttribute('aria-hidden', 'true');
-ring.appendChild(av);
-var info = el('span', 'pub-info');
-var name = el('span', 'pub-mini-name');
-add(name, elAuto('span', 'pub-mini-text', pub.name || T.publisherFallback), icon('verified', 'pub-verified'));
-var sub = [T.kinds[pub.kind] || T.kinds.individual];
-if (pub.city) sub.push(pub.city);
-var stats = [];
-if (pub.followers > 0) stats.push(T.followers(pub.followers));
-if (pub.courses > 1) stats.push(T.courses(pub.courses));
-add(info, name, el('span', 'pub-mini-sub', sub.join(' · ')),
-stats.length ? el('span', 'pub-mini-sub', stats.join(' · ')) : null);
-add(a, ring, info, icon('chevron', 'pub-chev'));
-return a;
 }
 function courseCard(c) {
 var card = el('article', 'card course');
@@ -1991,51 +1990,158 @@ document.title = page.title;
 setupCta(openButton(t, T.open, 'btn-primary'), true);
 finish();
 }
-function coverBadge(ic, text, cls) {
-var b = el('span', 'c-badge' + (cls ? ' ' + cls : ''));
-add(b, icon(ic), el('span', '', text));
-return b;
+var COVER_TONES = ['#9A4A2B', '#55652B', '#3B5468', '#6A3A5A', '#1E6560',
+'#9C6619', '#7A3A32', '#2E5946', '#474C78', '#7A5A38'];
+function coverTone(c) {
+var key = c.subject || c.subjectLabel || c.title || c.id || 'x';
+return COVER_TONES[stableHash(key) % COVER_TONES.length];
 }
-function courseCover(c, count) {
-var box = el('div', 'c-cover');
-var glyph = icon('menuBook', 'c-glyph');
-box.appendChild(glyph);
+function pad2(n) {
+return n < 10 ? '0' + n : String(n);
+}
+function courseHero(c) {
+var box = el('header', 'ch');
+box.style.backgroundColor = coverTone(c);
+var mono = el('span', 'ch-mono', firstGrapheme(c.subject || c.subjectLabel || c.title || ''));
+mono.setAttribute('aria-hidden', 'true');
+box.appendChild(mono);
 if (c.cover) {
-var img = el('img', 'c-img');
+var img = el('img', 'ch-photo');
 img.alt = '';
-img.setAttribute('loading', 'lazy');
 img.setAttribute('decoding', 'async');
 img.setAttribute('referrerpolicy', 'no-referrer');
-img.addEventListener('error', function () { detach(img); });
+img.addEventListener('load', function () { box.className = 'ch has-photo'; });
+img.addEventListener('error', function () {
+detach(img);
+box.className = 'ch';
+});
 img.src = c.cover;
 box.appendChild(img);
 }
-box.appendChild(el('span', 'c-scrim'));
-var share = el('button', 'frost c-share');
+box.appendChild(el('span', 'ch-scrim'));
+var share = el('button', 'ch-share');
 share.type = 'button';
 share.setAttribute('aria-label', T.share);
 share.setAttribute('title', T.share);
 share.appendChild(icon('share'));
 share.addEventListener('click', function () { shareCourse(c); });
 box.appendChild(share);
-var badges = el('div', 'c-badges');
-if (count > 0) badges.appendChild(coverBadge('stories', plural(count, 'درس', 'دروس')));
-if (c.price <= 0) badges.appendChild(coverBadge('lockOpen', T.freeCourse, 'c-badge-free'));
-if (badges.firstChild) box.appendChild(badges);
+var inner = el('div', 'ch-inner');
+var tree = metaParts(c).filter(function (t) {
+return t !== c.subject && (c.title || '').indexOf(t) < 0;
+});
+if (tree.length) inner.appendChild(metaNode('p', 'ch-eyebrow', tree));
+inner.appendChild(elAuto('h1', 'ch-title', c.title || T.untitled));
+box.appendChild(inner);
 return box;
 }
-function courseHead(c) {
-var head = el('div', 'c-head');
-head.appendChild(elAuto('h1', 'c-title', c.title || T.untitled));
-var tree = metaParts(c);
-if (tree.length) add(head, add(el('p', 'c-tree'), icon('tree'), metaNode('span', '', tree)));
-return head;
+function pubLine(pub) {
+var linked = !!pub.id;
+var a = el(linked ? 'a' : 'div', 'cp');
+if (linked) {
+a.href = localHref('publisher', pub.id);
+a.setAttribute('data-nav', '1');
 }
-function priceCard(c) {
-var card = el('section', 'card c-price');
-card.appendChild(priceEl(c, true));
-if (c.price > 0) card.appendChild(el('span', 'c-pay', T.payShamCash));
-return card;
+var av = avatar(pub.logo, pub.name, pub.kind, 42);
+av.removeAttribute('role');
+av.setAttribute('aria-hidden', 'true');
+var info = el('span', 'cp-info');
+var name = el('span', 'cp-name');
+add(name, elAuto('span', 'cp-text', pub.name || T.publisherFallback), icon('verified', 'cp-ok'));
+var sub = [T.kinds[pub.kind] || T.kinds.individual];
+if (pub.city) sub.push(pub.city);
+if (pub.courses > 1) sub.push(T.courses(pub.courses));
+if (pub.followers > 0) sub.push(T.followers(pub.followers));
+add(info, el('span', 'cp-by', T.by), name, el('span', 'cp-sub', sub.join(' · ')));
+add(a, av, info, linked ? icon('chevron', 'cp-chev') : null);
+return a;
+}
+function factsRow(c, m) {
+var list = m.lessons;
+var count = list ? list.length : c.lessons;
+var pages = 0;
+var free = 0;
+if (list) {
+list.forEach(function (l) {
+if (l.kind === 'file') pages += l.pages;
+if (l.openable) free++;
+});
+}
+var cells = [];
+if (count > 0) cells.push([String(count), count === 1 ? T.factLesson : T.factLessons]);
+if (pages > 0) cells.push([String(pages), T.factPages]);
+if (c.price > 0 && free > 0) cells.push([String(free), T.factFree]);
+if (c.rating !== null && c.rating > 0 && c.ratings > 0) {
+cells.push([(Math.round(c.rating * 10) / 10).toFixed(1), T.factRating(c.ratings)]);
+} else if (c.students > 0) {
+cells.push([String(c.students), T.factStudents]);
+}
+if (!cells.length) return null;
+var row = el('dl', 'facts');
+cells.slice(0, 4).forEach(function (x) {
+var cell = el('div', 'fact');
+add(cell, el('dt', 'fact-l', x[1]), el('dd', 'fact-n', x[0]));
+row.appendChild(cell);
+});
+return row;
+}
+function firstOpen(list) {
+if (!list) return null;
+for (var i = 0; i < list.length; i++) if (list[i].openable) return list[i];
+return null;
+}
+function optRow(o) {
+var node;
+if (o.href) {
+node = el('a', 'opt-row');
+node.href = o.href;
+if (o.nav) node.setAttribute('data-nav', '1');
+} else {
+node = el('button', 'opt-row');
+node.type = 'button';
+node.addEventListener('click', o.onClick);
+}
+if (o.main) node.className += ' is-main';
+var ic = el('span', 'opt-ic');
+ic.appendChild(icon(o.icon));
+var body = el('span', 'opt-body');
+add(body, el('span', 'opt-title', o.title), o.subNode || (o.sub ? el('span', 'opt-sub', o.sub) : null));
+add(node, ic, body, icon('chevron', 'opt-chev'));
+return node;
+}
+function optionsBox(c, m, t) {
+var box = el('section', 'opt');
+box.setAttribute('aria-label', T.options);
+var head = el('div', 'opt-head');
+add(head, el('span', 'opt-label', c.price > 0 ? T.fullPrice : T.allOpen), priceEl(c, true));
+box.appendChild(head);
+var list = el('div', 'opt-list');
+var first = firstOpen(m.lessons);
+if (first) {
+list.appendChild(optRow({
+href: lessonHref(c.id, first.id),
+nav: true,
+main: true,
+icon: 'lockOpen',
+title: c.price > 0 ? T.tryFree : T.startFirst,
+subNode: add(el('span', 'opt-sub'), document.createTextNode('«'),
+elAuto('bdi', '', first.title || T.lessonN(1)), document.createTextNode(T.tryFreeTail)),
+}));
+}
+list.appendChild(optRow({
+onClick: function () { openInApp(t); },
+icon: 'open',
+title: c.price > 0 ? T.buyCourse : T.openCourse,
+sub: c.price > 0 ? T.buySub : T.openSub,
+}));
+list.appendChild(optRow({
+onClick: function () { shareCourse(c); },
+icon: 'share',
+title: T.share,
+sub: T.shareSub,
+}));
+box.appendChild(list);
+return box;
 }
 function autoAbout(c, m) {
 var subject = c.subject || c.subjectLabel;
@@ -2056,131 +2162,107 @@ if (c.price <= 0) out += ' والدورة كلها مجانية.';
 else if (free > 0) out += free === 1 ? ' وفيك تجرّب درسها المجاني قبل ما تشتري.' : ' وفيك تجرّب دروسها المجانية قبل ما تشتري.';
 return out;
 }
-function aboutCard(c, m) {
-var card = el('section', 'card c-about');
-add(card, add(el('h2', 'c-about-title'), icon('infoOutline'), el('span', '', T.aboutCourse)));
-if (c.description) card.appendChild(clampText(c.description, 'desc'));
-else card.appendChild(elAuto('p', 'desc', autoAbout(c, m)));
-return card;
+function aboutBlock(c, m) {
+var sec = el('section', 'cab');
+sec.appendChild(el('h2', 'sec-label', T.aboutCourse));
+if (c.description) sec.appendChild(clampText(c.description, 'desc'));
+else sec.appendChild(elAuto('p', 'desc', autoAbout(c, m)));
+return sec;
 }
 function lessonIcon(kind) {
 return kind === 'quiz' ? 'quiz' : kind === 'video' ? 'video' : 'pdf';
 }
-function lessonCard(l, idx, c, mode) {
+function lessonRow(l, idx, c, mode) {
+var li = el('li', 'syl-item');
 var node;
 var open = mode === 'live' && l.openable;
 var plain = mode !== 'live' && (l.free || c.price <= 0);
 if (open) {
-node = el('a', 'lesson');
+node = el('a', 'row is-open');
 node.href = lessonHref(c.id, l.id);
 node.setAttribute('data-nav', '1');
 } else if (!plain) {
-node = el('button', 'lesson is-locked');
+node = el('button', 'row is-locked');
 node.type = 'button';
 node.addEventListener('click', function () { openSheet(l, node); });
 } else {
-node = el('div', 'lesson is-plain');
+node = el('div', 'row is-plain');
 }
 if (l.id) node.setAttribute('data-lid', l.id);
 node.setAttribute('data-kind', l.kind);
-node.style.animationDelay = Math.min(idx, 8) * 55 + 'ms';
+li.style.animationDelay = Math.min(idx, 10) * 40 + 'ms';
 var locked = !open && !plain;
-var tile = el('span', 'l-tile');
-tile.appendChild(icon(lessonIcon(l.kind)));
-if (locked) {
-var lock = el('span', 'l-lock');
-lock.appendChild(icon('lock'));
-tile.appendChild(lock);
-}
-var body = el('span', 'l-body');
-var meta = el('span', 'l-meta');
-meta.appendChild(el('span', 'l-type', T.type[l.kind]));
-var extra = [];
+var num = el('span', 'row-n', pad2(idx + 1));
+num.setAttribute('aria-hidden', 'true');
+var meta = el('span', 'row-meta');
+meta.appendChild(icon(lessonIcon(l.kind), 'row-ic'));
+var extra = [T.type[l.kind]];
 if (l.kind === 'file' && l.pages > 0) extra.push(l.pages + ' صفحة');
 if (l.kind === 'quiz' && l.questions > 0) extra.push(l.questions + ' سؤال');
 if (l.kind === 'quiz' && l.minutes > 0) extra.push(l.minutes + ' دقيقة');
-if (extra.length) meta.appendChild(document.createTextNode(' · ' + extra.join(' · ')));
+meta.appendChild(el('span', '', extra.join(' · ')));
 if (locked) meta.appendChild(el('span', 'sr-only', ' — ' + T.lockedSr));
-add(body, elAuto('span', 'l-title', l.title || T.lessonN(l.n)), meta);
-add(node, tile, body);
-if (l.free && (open || mode !== 'live') && c.price > 0) node.appendChild(el('span', 'l-free', T.free));
-else if (open) node.appendChild(icon('chevron', 'l-chev'));
-return node;
+var body = el('span', 'row-body');
+add(body, elAuto('span', 'row-title', l.title || T.lessonN(l.n)), meta);
+var end = el('span', 'row-end');
+if (c.price > 0 && (open || (plain && l.free))) end.appendChild(el('span', 'row-free', T.free));
+if (locked) end.appendChild(icon('lock', 'row-lock'));
+else if (open) end.appendChild(icon('chevron', 'row-chev'));
+add(node, num, body, end);
+li.appendChild(node);
+return li;
 }
-function defaultTab(groups) {
-var i;
-for (i = 0; i < KINDS.length; i++) {
-var g = groups[KINDS[i]];
-for (var j = 0; j < g.length; j++) if (g[j].openable) return KINDS[i];
-}
-for (i = 0; i < KINDS.length; i++) if (groups[KINDS[i]].length) return KINDS[i];
-return 'file';
-}
-function lessonTabs(groups, active, vs, c, mode) {
-var wrap = el('div', 'tabs-wrap');
-var bar = el('div', 'tabs');
-bar.setAttribute('role', 'tablist');
-bar.setAttribute('aria-label', T.tabsLabel);
-var tabs = {};
-var panels = {};
-var selectTab = function (k, focus) {
-if (!tabs[k]) return;
-KINDS.forEach(function (x) {
-var on = x === k;
-tabs[x].setAttribute('aria-selected', on ? 'true' : 'false');
-tabs[x].setAttribute('tabindex', on ? '0' : '-1');
-tabs[x].className = 'tab' + (on ? ' is-on' : '');
-panels[x].hidden = !on;
+function syllabus(list, groups, vs, c, mode) {
+var wrap = el('div', 'syl');
+var kinds = KINDS.filter(function (k) { return groups[k].length > 0; });
+var ol = el('ol', 'syl-list');
+var items = list.map(function (l, i) {
+var li = lessonRow(l, i, c, mode);
+ol.appendChild(li);
+return li;
 });
-if (focus) focusNoScroll(tabs[k]);
+var chipsBy = {};
+var apply = function (k) {
+var first = true;
+items.forEach(function (li, i) {
+var show = k === 'all' || list[i].kind === k;
+li.hidden = !show;
+li.className = 'syl-item' + (show && first ? ' is-first' : '');
+if (show) first = false;
+});
+for (var key in chipsBy) {
+if (hasOwn(chipsBy, key)) {
+chipsBy[key].setAttribute('aria-pressed', key === k ? 'true' : 'false');
+chipsBy[key].className = 'syl-chip' + (key === k ? ' is-on' : '');
+}
+}
 };
-KINDS.forEach(function (k) {
-var b = el('button', 'tab');
+if (kinds.length > 1) {
+var bar = el('div', 'syl-filter');
+bar.setAttribute('role', 'group');
+bar.setAttribute('aria-label', T.tabsLabel);
+['all'].concat(kinds).forEach(function (k) {
+var b = el('button', 'syl-chip');
 b.type = 'button';
-b.id = 'tab-' + k;
-b.setAttribute('role', 'tab');
-b.setAttribute('aria-controls', 'panel-' + k);
-add(b, icon(lessonIcon(k)), el('span', 'tab-label', T.tabs[k] + ' (' + groups[k].length + ')'));
+add(b, el('span', '', k === 'all' ? T.all : T.tabs[k]),
+el('span', 'syl-n', String(k === 'all' ? list.length : groups[k].length)));
 b.addEventListener('click', function () {
 vs.tab = k;
-selectTab(k, false);
+apply(k);
 });
-tabs[k] = b;
+chipsBy[k] = b;
 bar.appendChild(b);
-var p = el('div', 'tab-panel');
-p.id = 'panel-' + k;
-p.setAttribute('role', 'tabpanel');
-p.setAttribute('aria-labelledby', 'tab-' + k);
-if (!groups[k].length) {
-p.appendChild(el('p', 'tab-empty', T.emptyTab[k]));
-} else {
-var list = el('div', 'lesson-list');
-groups[k].forEach(function (l, i) { list.appendChild(lessonCard(l, i, c, mode)); });
-p.appendChild(list);
-}
-panels[k] = p;
-});
-bar.addEventListener('keydown', function (ev) {
-var key = ev.key || '';
-var code = ev.keyCode;
-var cur = KINDS.indexOf(vs.tab || active);
-var next = -1;
-if (key === 'ArrowLeft' || key === 'Left' || code === 37) next = Math.min(KINDS.length - 1, cur + 1);
-else if (key === 'ArrowRight' || key === 'Right' || code === 39) next = Math.max(0, cur - 1);
-else if (key === 'Home' || code === 36) next = 0;
-else if (key === 'End' || code === 35) next = KINDS.length - 1;
-if (next < 0) return;
-ev.preventDefault();
-vs.tab = KINDS[next];
-selectTab(KINDS[next], true);
 });
 wrap.appendChild(bar);
-KINDS.forEach(function (k) { wrap.appendChild(panels[k]); });
-selectTab(active, false);
+}
+wrap.appendChild(ol);
+var start = kinds.length > 1 && vs.tab && (vs.tab === 'all' || groups[vs.tab] && groups[vs.tab].length) ? vs.tab : 'all';
+apply(start);
 page.refs.selectTab = function (k) {
-if (!tabs[k]) return;
-vs.tab = k;
-selectTab(k, false);
+var cur = vs.tab || 'all';
+if (cur === 'all' || cur === k) return;
+vs.tab = 'all';
+apply('all');
 };
 return wrap;
 }
@@ -2191,7 +2273,7 @@ sec.id = 'lessons';
 sec.setAttribute('aria-labelledby', 'lessonsTitle');
 var h = el('h2', 'sec-title');
 h.id = 'lessonsTitle';
-add(h, icon('menuBook'), el('span', '', T.courseContent));
+h.appendChild(el('span', '', T.courseContent));
 sec.appendChild(h);
 var list = m.lessons;
 var mode = 'live';
@@ -2241,20 +2323,19 @@ add(empty, ic, el('h3', '', T.noLessons), el('p', '', T.noLessonsHint));
 sec.appendChild(empty);
 return sec;
 }
+h.appendChild(el('span', 'sec-count', T.lessons(list.length)));
 var groups = { file: [], video: [], quiz: [] };
 var openCount = 0;
-list.forEach(function (l) {
+list.forEach(function (l, i) {
 groups[l.kind].push(l);
-l.n = groups[l.kind].length;
+l.n = i + 1;
 if (l.openable) openCount++;
 });
 if (mode === 'live' && openCount > 0 && c.price > 0) {
-var fs = el('div', 'info-strip');
-add(fs, icon('lockOpen'), el('span', 'info-text', T.freeStrip(openCount, openCount === list.length)));
-sec.appendChild(fs);
+sec.appendChild(add(el('p', 'syl-note'), icon('lockOpen'),
+el('span', '', T.freeStrip(openCount, openCount === list.length))));
 }
-var active = vs.tab && groups[vs.tab] ? vs.tab : defaultTab(groups);
-sec.appendChild(lessonTabs(groups, active, vs, c, mode));
+sec.appendChild(syllabus(list, groups, vs, c, mode));
 return sec;
 }
 function findLesson(list, id) {
@@ -2268,25 +2349,20 @@ var c = m.course;
 var pub = m.publisher;
 var t = { kind: 'course', id: c.id };
 var vs = viewState(c.id);
-if (r.lesson && !r.lessonDone && r.lesson !== 'bad') {
-var pre = findLesson(m.lessons, r.lesson);
-if (pre && pre.openable) vs.tab = pre.kind;
-}
 beginRender('course', c.id);
 var refs = page.refs;
 refs.stale = el('div', 'slot');
 refs.note = el('div', 'slot');
 if (r.lessonNote) refs.note.appendChild(noteBanner(T.lessonNotHere));
-var count = m.lessons ? m.lessons.length : c.lessons;
 add(root,
-courseCover(c, count),
+courseHero(c),
 refs.stale,
 cameBackBanner(t),
 refs.note,
-courseHead(c),
-publisherMini(pub),
-priceCard(c),
-aboutCard(c, m),
+pubLine(pub),
+factsRow(c, m),
+optionsBox(c, m, t),
+aboutBlock(c, m),
 lessonsSection(ent, m, vs),
 pub.id ? allCoursesLink(pub) : null);
 updateStale(ent);
