@@ -36,6 +36,7 @@
   --accent: #C94A0C;
   --accent-soft: #FBE9DD;
   --accent-ink: #A63D0A; /* نص بلون الهوية فوق --accent-soft */
+  --rule: #EDCDB8; /* خط هامش الدفتر بقائمة الدروس */
 
   --bg: #F6F2EC;
   --card: #FFFDF9;
@@ -89,6 +90,7 @@
     --accent: #F2753A;
     --accent-soft: rgba(242, 117, 58, 0.14);
     --accent-ink: #F2753A;
+    --rule: rgba(242, 117, 58, 0.32);
 
     --bg: #14110E;
     --card: #1C1915;
@@ -136,6 +138,7 @@
   --accent: #F2753A;
   --accent-soft: rgba(242, 117, 58, 0.14);
   --accent-ink: #F2753A;
+  --rule: rgba(242, 117, 58, 0.32);
   --bg: #14110E;
   --card: #1C1915;
   --card-locked: #1A1713;
@@ -394,7 +397,7 @@ html[data-page="publisher"] .topbar {
 }
 
 .btn-soft {
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-soft);
 }
 
@@ -426,6 +429,11 @@ html[data-page="publisher"] .topbar {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+/* «حمّل آخر نسخة» و«انسخ الرابط» ما بينقسموا عسطرين */
+.note-text .link-btn {
+  white-space: nowrap;
 }
 
 .link-btn[disabled] {
@@ -660,32 +668,46 @@ html[data-page="publisher"] .topbar {
 }
 
 /* ─────────────── بطاقات الدورات (صفحة الناشر) ─────────────── */
+/* بطاقة دورة بصفحة الناشر: دفتر صغير جنب العنوان، والبطاقة كلها رابط لصفحة الدورة */
 .course {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding: 14px;
   overflow: hidden;
+  -webkit-transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
-/* غلاف بطاقة الدورة: نفس غلاف الدفتر بصفحة الدورة (لون المادة + سطور + حرف) */
+.course:active {
+  background: var(--line-2);
+}
+
+/* الغلاف: نفس دفتر صفحة الدورة (لون المادة + سطور + حرف) بعطفه عاليمين */
 .cover {
   position: relative;
   display: block;
-  width: 100%;
-  height: 0;
-  padding-top: 46%;
+  flex: none;
+  width: 72px;
+  height: 96px;
+  margin-left: 14px;
   overflow: hidden;
+  border-radius: 10px 3px 3px 10px;
   background-color: #9A4A2B;
   background-image:
-    linear-gradient(to left, transparent 26px, rgba(255, 255, 255, 0.22) 26px, rgba(255, 255, 255, 0.22) 27px, transparent 27px),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 23px, rgba(255, 255, 255, 0.075) 23px, rgba(255, 255, 255, 0.075) 24px);
+    linear-gradient(to left, transparent 12px, rgba(255, 255, 255, 0.22) 12px, rgba(255, 255, 255, 0.22) 13px, transparent 13px),
+    repeating-linear-gradient(to top, rgba(255, 255, 255, 0.075) 0, rgba(255, 255, 255, 0.075) 1px, transparent 1px, transparent 12px);
 }
 
+/* الحرف مقصوص عالحافة التحتانية متل الغلاف الكبير (خطّه على الحافة: 0.134em) */
 .cover-mono {
   position: absolute;
-  top: 0;
-  left: 26px;
+  bottom: -10px;
+  left: -4px;
   color: rgba(255, 255, 255, 0.12);
-  font-size: 110px;
+  font-size: 72px;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1;
   pointer-events: none;
 }
 
@@ -698,22 +720,13 @@ html[data-page="publisher"] .topbar {
   object-fit: cover;
 }
 
-.cover .glyph {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 64px;
-  height: 64px;
-  margin: -32px 0 0 -32px;
-  fill: rgba(255, 255, 255, 0.35);
-}
-
 .course-body {
-  padding: 14px 16px 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .course-title {
-  font-size: 16.5px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -724,37 +737,47 @@ html[data-page="publisher"] .topbar {
   text-decoration: none;
 }
 
+/* الرابط بيغطّي البطاقة كلها (بلا خاصية inset) */
+.course-title a::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
 .course-meta {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--grey);
-  font-size: 12.5px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  /* «السنة الخامسة» ما بتنقسم (المتصفح القديم بيتجاهلها) */
+  text-wrap: pretty;
 }
 
 .course-body .chips {
-  margin-top: 7px;
+  margin-top: 6px;
 }
 
 .course-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  margin-top: 14px;
-  padding-top: 7px;
-  border-top: 1px solid var(--line);
-}
-
-.course-foot > * {
-  margin-top: 5px;
+  margin-top: 8px;
 }
 
 .course-foot > .price {
   margin-left: 10px;
+}
+
+.course-chev {
+  flex: none;
+  color: var(--muted);
 }
 
 /* ─────────────── السعر ─────────────── */
@@ -897,6 +920,11 @@ html[data-page="publisher"] .topbar {
   text-align: right;
 }
 
+/* كل جزء (الجامعة · الكلية · السنة) بيلتفّ قطعة وحدة */
+.ch-eyebrow bdi {
+  display: inline-block;
+}
+
 .ch-title {
   font-size: 28px;
   font-weight: 800;
@@ -987,127 +1015,84 @@ html[data-page="publisher"] .topbar {
   color: var(--muted);
 }
 
-/* ── خياراتك: جرّب مجاناً مقابل الدورة كاملة بسعرها ── */
-.opt-wrap {
-  margin-top: 24px;
-}
-
-.opt {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--card);
-}
-
-.opt-row {
-  position: relative;
+/* ── جرّب مجاناً + شارك (الشراء بالشريط والتنزيل فوق) ── */
+.acts {
   display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 68px;
-  padding: 12px 18px;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  text-align: right;
-  text-decoration: none;
-  cursor: pointer;
-  -webkit-transition: background-color 0.15s ease;
-  transition: background-color 0.15s ease;
+  align-items: stretch;
+  margin-top: 16px;
 }
 
-.opt-row + .opt-row {
-  border-top: 1px solid var(--line);
-}
-
-.opt-row:active {
-  background: var(--line-2);
-}
-
-.opt-body {
-  display: block;
-  flex: 1;
+.act-try {
+  flex: 1 1 auto;
   min-width: 0;
-  line-height: 1.45;
+  min-height: 56px;
+  margin-left: 8px;
+  padding: 6px 14px;
+  text-align: right;
+  white-space: normal;
 }
 
-.opt-title {
+.act-try > .ic {
+  width: 22px;
+  height: 22px;
+  margin-left: 10px;
+}
+
+.act-txt {
+  display: block;
+  min-width: 0;
+}
+
+.act-t {
   display: block;
   font-size: 15px;
-  font-weight: 800;
+  line-height: 1.35;
 }
 
-.opt-row.is-main .opt-title {
-  color: var(--accent);
-}
-
-.opt-subs {
+.act-s {
   display: block;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.opt-sub {
-  display: block;
-  color: var(--grey);
-  font-size: 13.5px;
-  text-align: right;
-}
-
-.opt-deal {
-  color: var(--red-ink);
-  font-weight: 800;
-}
-
-.opt-end {
+.act-share {
   flex: none;
-  margin-right: 10px;
-  text-align: left;
-}
-
-.opt-price {
-  display: block;
-  line-height: 1.25;
-  text-align: left;
-}
-
-.opt-price-now {
-  display: block;
-  color: var(--accent);
-  font-size: 19px;
-  font-weight: 800;
-}
-
-.opt-price-cur,
-.opt-price-old {
-  display: block;
-  color: var(--grey);
-  font-size: 12px;
-}
-
-.opt-chev {
-  margin-right: 8px;
-  color: var(--muted);
-}
-
-.opt-share {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  margin-top: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
+  flex-direction: column;
+  width: 76px;
+  min-height: 56px;
+  padding: 6px 0 5px;
   color: var(--ink-soft);
-  font: 800 13.5px/1.4 var(--font);
-  cursor: pointer;
+  font-size: 12.5px;
+  line-height: 1.3;
 }
 
-.opt-share .ic {
-  width: 18px;
-  height: 18px;
-  margin-left: 6px;
+.act-share > .ic {
+  width: 20px;
+  height: 20px;
+  margin: 0 0 2px;
+}
+
+.act-hold {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 56px;
+  margin-left: 8px;
+  border-radius: 14px;
+}
+
+.act-share.is-wide {
+  flex: 1 1 auto;
+  flex-direction: row;
+  width: auto;
+  font-size: 15px;
+}
+
+.act-share.is-wide > .ic {
+  margin: 0 0 0 8px;
 }
 
 /* ── عن الدورة ── */
@@ -1125,7 +1110,7 @@ html[data-page="publisher"] .topbar {
 
 /* ── المنهاج ── */
 .lessons {
-  margin-top: 32px;
+  margin-top: 28px;
 }
 
 .sec-title {
@@ -1138,53 +1123,165 @@ html[data-page="publisher"] .topbar {
   line-height: 1.4;
 }
 
-.sec-count {
-  margin-right: 8px;
-  color: var(--grey);
-  font-size: 13.5px;
-  font-weight: 400;
-}
-
-.syl-filter {
+/* ── الخيارات الثلاثة متل تبويب التطبيق: مؤشّر صافي بينزلق ── */
+.seg {
+  position: relative;
   display: flex;
-  margin: 0 -16px 12px;
-  padding: 2px 16px 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.syl-filter::-webkit-scrollbar {
-  display: none;
-}
-
-.syl-chip {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  min-height: 40px;
-  margin-left: 6px;
-  padding: 0 14px;
+  padding: 4px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 18px;
   background: var(--card);
+  box-shadow: var(--shadow-tabs);
+}
+
+/* بالدورة الطويلة الخيارات بتلزق فوق وإنت نازل متل التطبيق (بس بالمتصفح يلي بيدعمها) */
+@supports (position: -webkit-sticky) or (position: sticky) {
+  .seg {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+    /* حلقة بلون الصفحة: بتغطّي السطور يلي بتمرق جنب الزوايا وتحت الشريط (بمكانه ما بتبين) */
+    box-shadow: var(--shadow-tabs), 0 0 0 8px var(--bg);
+  }
+  /* شريحة فوق الشريط بارتفاع ٨ (مو ٩) حتى ما تغطّي حدّه */
+  .seg::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    right: -8px;
+    left: -8px;
+    height: 8px;
+    background: var(--bg);
+  }
+  /* التركيز بالكيبورد ما بيوقع تحت الشريط اللازق */
+  .syl-list .row {
+    scroll-margin-top: 88px;
+  }
+}
+
+.seg-rail {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  left: 4px;
+  pointer-events: none;
+}
+
+.seg-thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 33.3333%;
+  border-radius: 14px;
+  background: #C94A0C;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.18), 0 1px 2px rgba(60, 20, 0, 0.24);
+  -webkit-transition: -webkit-transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.seg.at-1 .seg-thumb {
+  -webkit-transform: translateX(-100%);
+  transform: translateX(-100%);
+}
+
+.seg.at-2 .seg-thumb {
+  -webkit-transform: translateX(-200%);
+  transform: translateX(-200%);
+}
+
+.seg-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 60px;
+  padding: 7px 4px 6px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
   color: var(--ink-soft);
-  font: 400 13.5px/1 var(--font);
+  font: 800 13.5px/1.3 var(--font);
   cursor: pointer;
+  -webkit-transition: color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-/* المختار: إطار بالحبر بدل كتلة سودا */
-.syl-chip.is-on {
-  border-color: var(--ink);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
-  font-weight: 800;
+.seg-ic {
+  width: 21px;
+  height: 21px;
+  margin-bottom: 3px;
+  color: var(--grey);
 }
 
-.syl-n {
-  margin-right: 6px;
+.seg-txt {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.seg-n {
+  color: var(--grey);
   font-weight: 400;
-  opacity: 0.75;
+}
+
+/* خيار فاضي: بلا رقم، أهدى */
+.seg-tab.is-empty {
+  color: var(--grey);
+}
+
+.seg-tab.is-empty .seg-ic {
+  color: var(--muted);
+}
+
+.seg-tab.is-on,
+.seg-tab.is-on .seg-ic,
+.seg-tab.is-on .seg-n {
+  color: #FFFFFF;
+}
+
+.seg-tab:not(.is-on):active {
+  background: var(--line-2);
+}
+
+.seg-tab:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.seg-panel {
+  margin-top: 12px;
+}
+
+.seg-empty {
+  padding: 26px 20px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  text-align: center;
+}
+
+.seg-empty-ic {
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+}
+
+.seg-empty-t {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.seg-empty-go {
+  margin-top: 14px;
 }
 
 .syl-list {
@@ -1194,7 +1291,9 @@ html[data-page="publisher"] .topbar {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: var(--card);
+  background-color: var(--card);
+  /* ورقة دفتر: خط هامش بعد عمود الأرقام (نفس هوية الغلاف) */
+  background-image: linear-gradient(to left, transparent 45px, var(--rule) 45px, var(--rule) 46px, transparent 46px);
 }
 
 .row {
@@ -1203,7 +1302,7 @@ html[data-page="publisher"] .topbar {
   align-items: center;
   width: 100%;
   min-height: 66px;
-  padding: 12px 16px;
+  padding: 12px 0 12px 16px;
   border: 0;
   background: none;
   color: var(--ink);
@@ -1215,8 +1314,8 @@ html[data-page="publisher"] .topbar {
   transition: background-color 0.15s ease;
 }
 
-/* فاصل بين السطور بيبلّش من عند العناوين (مو من الرقم) */
-.syl-item:not(.is-first) > .row::after {
+/* فاصل بين السطور من خط الهامش لآخر السطر (الأرقام بالهامش بلا فواصل) */
+.syl-item + .syl-item > .row::after {
   content: '';
   position: absolute;
   top: 0;
@@ -1230,41 +1329,56 @@ html[data-page="publisher"] .topbar {
   cursor: default;
 }
 
+/* رجعت من الدرس: سطره بيضوي لحظة وبيخفت (لون بس، بلا حركة) */
+.row.is-back {
+  background-color: var(--accent-soft);
+}
+
+.row.is-back .row-n,
+.row.is-back .row-meta {
+  color: var(--ink-soft);
+}
+
+.row.is-free.is-back .row-n {
+  color: var(--accent-ink);
+}
+
+.row.is-back .row-free {
+  background: var(--card);
+}
+
 .row:active {
   background: var(--line-2);
 }
 
-/* المجاني: خط بلون الهوية عالحافة اليمين — بالمنهاج وبـ«خياراتك» نفس الشي */
-.row.is-open::before,
-.opt-row.is-main::before {
+/* المجاني (بدورة مدفوعة): خط الهامش بيتلوّن بلون الهوية جنب السطر */
+.row.is-free::before {
   content: '';
   position: absolute;
-  top: 12px;
-  right: 0;
-  bottom: 12px;
+  top: 0;
+  right: 44px;
+  bottom: 0;
   width: 3px;
-  border-radius: 3px 0 0 3px;
   background: var(--accent);
 }
 
 /* حلقة التركيز جوّا: الصناديق قاصّة الحواف (overflow) */
-.row:focus-visible,
-.opt-row:focus-visible,
-.syl-chip:focus-visible {
+.row:focus-visible {
   outline-offset: -3px;
 }
 
+/* الرقم بعمود الهامش (45px) بالنص */
 .row-n {
   flex: none;
-  width: 30px;
-  color: var(--muted);
+  width: 45px;
+  color: var(--grey);
   font-size: 13.5px;
   font-weight: 800;
   direction: ltr;
-  text-align: right;
+  text-align: center;
 }
 
-.row.is-open .row-n {
+.row.is-free .row-n {
   color: var(--accent);
 }
 
@@ -1272,7 +1386,7 @@ html[data-page="publisher"] .topbar {
   display: block;
   flex: 1;
   min-width: 0;
-  margin-right: 4px;
+  margin-right: 14px;
   line-height: 1.5;
 }
 
@@ -1288,18 +1402,10 @@ html[data-page="publisher"] .topbar {
 }
 
 .row-meta {
-  display: flex;
-  align-items: center;
+  display: block;
   margin-top: 2px;
   color: var(--grey);
   font-size: 13.5px;
-}
-
-.row-ic {
-  width: 15px;
-  height: 15px;
-  margin-left: 5px;
-  color: var(--muted);
 }
 
 .row-end {
@@ -1453,20 +1559,61 @@ html[data-page="publisher"] .topbar {
     left: -16px;
     font-size: 300px;
   }
-  .syl-filter {
-    margin: 0 0 12px;
-    padding: 2px 0 6px;
-  }
+}
+
+/* آخر يوم بالخصم: بالكلمات، وتحت ٣٧٠ بالأرقام (بالكلمات بيلفّ لسطرين بشاشة ٣٦٠) */
+.cta-until-short {
+  display: none;
 }
 
 @media (max-width: 359px) {
   .ch-title {
     font-size: 25px;
   }
-  .row-n {
-    width: 24px;
+}
+
+@media (max-width: 370px) {
+  /* آخر يوم بالخصم بالأرقام (15/11) حتى يضل الشريط سطر واحد */
+  .cta-until {
+    display: none;
+  }
+  .cta-until-short {
+    display: inline;
   }
 }
+
+/* موبايل لحدّ ٧٠٠ طول (أغلب الموبايلات بشريط العنوان، ومتصفح تيليغرام/واتساب):
+ * غلاف أقصر حتى الخيارات الثلاثة وأول درس يبيّنوا فوق الشريط السفلي بأول شاشة */
+@media (max-height: 700px) and (max-width: 719px) {
+  .ch {
+    min-height: 150px;
+    padding-top: 25px;
+    padding-bottom: 23px;
+  }
+  .ch-mono {
+    bottom: -23px;
+    font-size: 170px;
+  }
+  .ch-title {
+    font-size: 25px;
+  }
+  .ch-eyebrow {
+    margin-bottom: 2px;
+  }
+  .cp {
+    padding: 10px 0;
+  }
+  .acts {
+    margin-top: 12px;
+  }
+  .lessons {
+    margin-top: 18px;
+  }
+  .lessons .sec-title {
+    margin-bottom: 8px;
+  }
+}
+
 
 /* ─────────────── ورقة «محتوى مقفول» ─────────────── */
 .sheet-backdrop {
@@ -1538,6 +1685,7 @@ html[data-page="publisher"] .topbar {
   color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.75;
+  white-space: pre-line;
 }
 
 .sheet-buttons {
@@ -2091,20 +2239,6 @@ html[data-page="publisher"] .topbar {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* بصفحة الدورة: وخيارات الدورة ظاهرة الشريط بيكرّرها ⇒ بينزل لتحت */
-.cta {
-  -webkit-transition: -webkit-transform 0.2s ease;
-  transition: transform 0.2s ease;
-}
-
-.cta.is-tucked {
-  -webkit-transform: translateY(110%);
-  transform: translateY(110%);
-  visibility: hidden;
-  -webkit-transition: -webkit-transform 0.2s ease, visibility 0s linear 0.2s;
-  transition: transform 0.2s ease, visibility 0s linear 0.2s;
-}
-
 .cta-in {
   max-width: 640px;
   margin: 0 auto;
@@ -2133,6 +2267,63 @@ html[data-page="publisher"] .topbar {
 
 .cta-buttons .btn-primary {
   flex-grow: 1.6;
+}
+
+/* شريط الدورة متل التطبيق: السعر + الشراء */
+.cta-buy {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 4px;
+}
+
+.cta-price {
+  flex: none;
+  max-width: 50%;
+  margin-left: 14px;
+  line-height: 1.3;
+}
+
+.cta-now {
+  display: block;
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.cta-cur {
+  margin-right: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.cta-old {
+  margin-right: 2px;
+  color: var(--grey);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.cta-sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--grey);
+  font-size: 12px;
+}
+
+.cta-deal {
+  color: var(--red-ink);
+  font-weight: 800;
+}
+
+.cta-buttons .cta-buy .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
 }
 
 .note {
@@ -2270,6 +2461,13 @@ html[data-page="publisher"] .topbar {
   border-radius: 0;
 }
 
+/* نفس ارتفاع الغلاف الأقصر بالموبايل القصير (بلا نطّة لما توصل البيانات) */
+@media (max-height: 700px) and (max-width: 719px) {
+  .sk-hero {
+    height: 150px;
+  }
+}
+
 .sk-title {
   height: 22px;
   margin: 20px 2px 10px;
@@ -2280,7 +2478,7 @@ html[data-page="publisher"] .topbar {
 }
 
 .sk-tabs {
-  height: 56px;
+  height: 70px;
   margin-top: 26px;
   border-radius: 18px;
 }
@@ -2320,11 +2518,11 @@ html[data-page="publisher"] .topbar {
     animation-duration: 2s;
   }
   .btn,
-  .tab,
-  .lesson,
-  .pub-mini,
+  .seg-thumb,
+  .seg-tab,
   .v-play,
   .mec-toast {
+    -webkit-transition: none;
     transition: none;
   }
 }
@@ -2340,13 +2538,15 @@ html[data-page="publisher"] .topbar {
   .pub-name {
     font-size: 18px;
   }
-  .tab .ic {
-    display: none;
+  .seg-tab {
+    font-size: 12px;
   }
-  .l-tile {
-    width: 46px;
-    height: 46px;
-    margin-left: 10px;
+  .seg-ic {
+    width: 19px;
+    height: 19px;
+  }
+  .act-share {
+    width: 64px;
   }
 }
 
