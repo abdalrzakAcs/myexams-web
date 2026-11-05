@@ -7,12 +7,19 @@ var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var app = document.getElementById('portal');
 var nav = document.getElementById('nav');
 function session() {
-try { return JSON.parse(sessionStorage.getItem('mec_session') || 'null'); }
-catch (e) { return null; }
+try {
+return JSON.parse(localStorage.getItem('mec_session') || sessionStorage.getItem('mec_session') || 'null');
+} catch (e) { return null; }
 }
 function saveSession(s) {
-if (!s) sessionStorage.removeItem('mec_session');
-else sessionStorage.setItem('mec_session', JSON.stringify(s));
+if (!s) {
+localStorage.removeItem('mec_session');
+sessionStorage.removeItem('mec_session');
+return;
+}
+var raw = JSON.stringify(s);
+localStorage.setItem('mec_session', raw);
+sessionStorage.setItem('mec_session', raw);
 }
 function token() {
 var s = session();
@@ -63,7 +70,7 @@ function paintNav() {
 clear(nav);
 nav.appendChild(link('الدورات', '#/'));
 nav.appendChild(link('الجامعات', '#/unis'));
-if (uid()) nav.appendChild(link('لوحتي', '#/publisher'));
+nav.appendChild(link('انشر كورسك', 'studio.html#/home'));
 nav.appendChild(link('مكتب طباعة', '#/shop'));
 if (uid()) {
 var out = el('button', '', 'خروج');
@@ -71,8 +78,8 @@ out.type = 'button';
 out.addEventListener('click', function () { saveSession(null); go('#/'); });
 nav.appendChild(out);
 } else {
-nav.appendChild(link('دخول', '#/login'));
-nav.appendChild(link('حساب جديد', '#/signup'));
+nav.appendChild(link('دخول', 'studio.html#/login'));
+nav.appendChild(link('حساب جديد', 'studio.html#/signup'));
 }
 }
 function link(text, href) {
@@ -110,10 +117,10 @@ clear(app);
 var hero = el('section', 'hero');
 hero.appendChild(el('p', '', 'ماي اكزامس'));
 hero.appendChild(el('h1', '', 'دوراتك وملخصاتك واختباراتك من المتصفح'));
-hero.appendChild(el('p', '', 'نفس المنصة. الملف ما بينزل عندك، والطباعة عن طريق مكتب معتمد.'));
+hero.appendChild(el('p', '', 'سجّل برقمك وأنشئ حساب ناشر وانشر كورسك من الموقع. لتكتمل حماية ملفاتك انشرها من التطبيق.'));
 var actions = el('div', 'hero-actions');
-var enter = el('a', 'btn btn-primary', 'حساب جديد');
-enter.href = '#/signup';
+var enter = el('a', 'btn btn-primary', 'سجّل برقمك وانشر');
+enter.href = 'studio.html#/signup';
 var dl = el('a', 'btn', 'حمّل التطبيق');
 dl.href = './';
 actions.appendChild(enter);
@@ -174,7 +181,12 @@ api('POST', path, { email: email.value.trim(), password: pass.value }, false)
 var access = data.access_token || (data.session && data.session.access_token);
 var user = data.user || (data.session && data.session.user);
 if (!access) throw new Error('تأكّد من البريد إذا وصلتك رسالة تفعيل، وبعدين ادخل.');
-saveSession({ access_token: access, user: user || {} });
+saveSession({
+access_token: access,
+refresh_token: data.refresh_token || (data.session && data.session.refresh_token) || '',
+expires_at: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+user: user || {}
+});
 go('#/');
 })
 .catch(function (ex) {
@@ -499,14 +511,18 @@ return;
 }
 var grid = el('div', 'grid');
 lessons.forEach(function (l) {
-var open = l.unlocked === true && l.url;
+var appOnly = l.app_only === true;
+var open = !appOnly && l.unlocked === true && l.url;
 var tile = el(open ? 'a' : 'article', 'course-tile');
 if (open) {
 if (l.kind === 'quiz') tile.href = '#/quiz/' + encodeURIComponent(l.url);
-else tile.href = '#/watch/' + encodeURIComponent(l.url) + '?t=' + encodeURIComponent(l.title || '');
+else {
+tile.href = '#/watch/' + encodeURIComponent(l.url) + '?t=' + encodeURIComponent(l.title || '') +
+(l.access === 'free_open' && l.kind !== 'video' ? '&d=1' : '');
+}
 }
 tile.appendChild(el('h3', '', l.title || 'درس'));
-tile.appendChild(el('p', 'meta', open ? (l.kind === 'quiz' ? 'اختبار' : l.kind === 'video' ? 'فيديو' : 'ملف') : 'مقفول'));
+tile.appendChild(el('p', 'meta', appOnly ? 'مجاني بالتطبيق بس' : open ? (l.kind === 'quiz' ? 'اختبار' : l.kind === 'video' ? 'فيديو' : 'ملف') : 'مقفول'));
 grid.appendChild(tile);
 });
 app.appendChild(grid);
@@ -520,7 +536,12 @@ function renderWatch(encoded) {
 clear(app);
 var path = decodeURIComponent(encoded);
 var title = '';
-try { title = decodeURIComponent(new URLSearchParams(route().query).get('t') || ''); } catch (e) { title = ''; }
+var canSave = false;
+try {
+var qs = new URLSearchParams(route().query);
+title = decodeURIComponent(qs.get('t') || '');
+canSave = qs.get('d') === '1';
+} catch (e) { title = ''; }
 var box = el('section', 'viewer');
 var wm = el('div', 'wm', 'نسخة ' + who() + ' — يُمنع نشرها');
 box.appendChild(wm);
@@ -548,10 +569,32 @@ box.appendChild(v);
 var frame = el('iframe');
 frame.src = url;
 box.appendChild(frame);
+if (canSave && box.parentNode === app) app.insertBefore(saveButton(path, title), box);
 }
 }).catch(function (ex) {
 box.appendChild(note(ex.message || 'ما قدرنا نفتح الملف.', 'bad'));
 });
+}
+function saveButton(path, title) {
+var name = String(title || 'ملف').replace(/[\\\/:*?"<>|\u0000-\u001f\u007f‎‏‪-‮⁦-⁩]+/g, ' ')
+.replace(/\s+/g, ' ').replace(/^[\s.]+|[\s.]+$/g, '').slice(0, 80) || 'ملف';
+if (!/\.pdf$/i.test(name)) name += '.pdf';
+var b = el('button', 'btn btn-primary', 'نزّل الملف');
+b.type = 'button';
+b.addEventListener('click', function () {
+b.disabled = true;
+signFile(path).then(function (url) {
+var a = el('a');
+a.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'download=' + encodeURIComponent(name);
+a.setAttribute('download', name);
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+}).catch(function () {
+if (b.parentNode) b.parentNode.insertBefore(note('ما قدرنا ننزّل الملف — جرّب مرّة تانية.', 'bad'), b.nextSibling);
+}).then(function () { b.disabled = false; });
+});
+return b;
 }
 function renderQuiz(encoded) {
 clear(app);
@@ -627,7 +670,10 @@ app.appendChild(el('p', 'meta', 'عم نجيب اللوحة…'));
 api('POST', '/rest/v1/rpc/publisher_dashboard', {}, true).then(function (d) {
 clear(app);
 if (!d || d.has_account !== true) {
-var none = card('لوحة الناشر', 'هال حساب ما عنده صفحة ناشر بعد. قدّم الطلب من التطبيق.');
+var none = card('لوحة الناشر', 'قدّم طلب الناشر من الموقع، بنفس خطوات التطبيق. حماية الملفات تكتمل لما تنشر من البرنامج.');
+var goPub = el('a', 'btn btn-primary', 'قدّم طلب ناشر');
+goPub.href = 'studio.html#/apply';
+none.appendChild(goPub);
 app.appendChild(none);
 return;
 }

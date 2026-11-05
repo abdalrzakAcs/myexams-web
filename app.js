@@ -108,6 +108,9 @@ lockedText: 'هالدرس بينفتح بالتطبيق.',
 lockedPrice: function (p) { return 'بينفتح لما تشتري الدورة كاملة بـ' + p + '.\nالدفع بشام كاش أو بكود من التطبيق.'; },
 lockedIos: function (p) { return 'بينفتح مع الدورة كاملة (' + p + ').'; },
 lockedOwn: function (p) { return 'بينفتح لما تشتريه لحالو بـ' + p + '.\nالدفع من التطبيق.'; },
+appOnlyKicker: 'مجاني بالتطبيق',
+appOnlyText: 'هالدرس مجاني، بس ناشره خلّاه ينفتح بالتطبيق بس — محمي من التنزيل وتصوير الشاشة.',
+appOnlySub: 'بتنفتح بالتطبيق بس',
 sheetTryFree: '» مجاناً هون',
 sheetTryFreeHead: 'أو جرّب «',
 unavailable: 'هالدرس مو متاح هلّق، جرّب بعدين.',
@@ -120,7 +123,7 @@ whatCourse: 'الدورة',
 whatPublisher: 'صفحة الناشر',
 whatLessons: 'دروس الدورة',
 whatLesson: 'الدرس',
-videoOnYoutube: 'هالفيديو متاح للمشاهدة على يوتيوب',
+videoOnYoutube: 'هالدرس مضاف من يوتيوب وما بيتشغّل من المتصفح. الفيديوهات الجديدة بتنرفع وبتشتغل داخل التطبيق.',
 openYoutube: 'افتح على يوتيوب',
 playVideo: 'شغّل الفيديو',
 videoAppOnly: 'هالفيديو بينفتح بالتطبيق بس',
@@ -811,6 +814,7 @@ var url = str(r.url).trim();
 var status = str(r.review_status).trim().toLowerCase();
 var avail = r.withdrawn !== true && (!status || status === 'approved');
 var okId = UUID_RE.test(id);
+var appOnly = r.app_only === true;
 out.push({
 id: okId ? id : '',
 title: str(r.title).trim(),
@@ -818,7 +822,9 @@ kind: lessonKindOf(r.kind, r.content_type),
 url: url,
 free: r.is_free === true,
 avail: avail,
-openable: avail && okId && r.unlocked === true && url !== '',
+appOnly: appOnly,
+access: str(r.access).trim().toLowerCase(),
+openable: !appOnly && avail && okId && r.unlocked === true && url !== '',
 price: num(r.price),
 pages: int(r.page_count),
 minutes: int(r.minutes),
@@ -1938,8 +1944,11 @@ feats.appendChild(add(el('li'), box, el('span', '', f[1])));
 });
 var site = el('a', 'btn btn-soft btn-block', T.portal);
 site.href = 'portal.html';
+var pubSite = el('a', 'btn btn-soft btn-block', 'انشر كورسك من الموقع');
+pubSite.href = 'studio.html';
 add(card, logo, mark, el('p', 'landing-tag', BRAND_TAG), el('h1', '', T.landing), feats,
 site,
+pubSite,
 canOfferDownload() ? downloadButton(T.download, 'btn-primary btn-block') : null);
 root.appendChild(card);
 setBusy(false);
@@ -2078,6 +2087,11 @@ if (!list) return null;
 for (var i = 0; i < list.length; i++) if (opensHere(list[i])) return list[i];
 return null;
 }
+function allAppOnly(list) {
+if (!list || !list.length || firstOpen(list)) return false;
+for (var i = 0; i < list.length; i++) if (!list[i].appOnly) return false;
+return true;
+}
 function actionsRow(c, m) {
 var row = el('div', 'acts');
 var first = firstOpen(m.lessons);
@@ -2106,9 +2120,10 @@ return row;
 function buyLabel(c) {
 return c.price > 0 && !IS_IOS ? T.buyInApp : T.openCourse;
 }
-function buyBar(c, t) {
+function buyBar(c, t, lessons) {
 if (c.price <= 0) {
-return add(el('div', 'cta-buy'), add(el('div', 'cta-price'), el('span', 'cta-now', T.freeNow)),
+return add(el('div', 'cta-buy'), add(el('div', 'cta-price'), el('span', 'cta-now', T.freeNow),
+allAppOnly(lessons) ? el('span', 'cta-sub', T.appOnlySub) : null),
 openButton(t, buyLabel(c), 'btn-primary'));
 }
 var d = discounted(c);
@@ -2143,12 +2158,13 @@ var li = el('li', 'syl-item');
 var node;
 var open = mode === 'live' && l.openable;
 var plain = mode !== 'live' && (l.free || c.price <= 0);
+var onlyApp = mode === 'live' && !open && l.appOnly;
 if (open) {
 node = el('a', 'row is-open' + (c.price > 0 ? ' is-free' : ''));
 node.href = lessonHref(c.id, l.id);
 node.setAttribute('data-nav', '1');
 } else if (!plain) {
-node = el('button', 'row is-locked');
+node = el('button', 'row ' + (onlyApp ? 'is-app' : 'is-locked'));
 node.type = 'button';
 node.addEventListener('click', function () { openSheet(l, node, c, free); });
 } else {
@@ -2156,7 +2172,7 @@ node = el('div', 'row is-plain');
 }
 if (l.id) node.setAttribute('data-lid', l.id);
 node.setAttribute('data-kind', l.kind);
-var locked = !open && !plain;
+var locked = !open && !plain && !onlyApp;
 var num = el('span', 'row-n', String(idx + 1));
 num.setAttribute('aria-hidden', 'true');
 var extra = [];
@@ -2169,6 +2185,7 @@ extra.length ? el('span', 'row-meta', extra.join(' · ')) : null,
 locked ? el('span', 'sr-only', ' — ' + T.lockedSr) : null);
 var end = el('span', 'row-end');
 if (c.price > 0 && (open || (plain && l.free))) end.appendChild(el('span', 'row-free', T.free));
+if (onlyApp) end.appendChild(el('span', 'row-free row-app', c.price > 0 ? T.appOnlyKicker : T.appKicker));
 if (locked) end.appendChild(icon('lock', 'row-lock'));
 else if (open) end.appendChild(icon('chevron', 'row-chev'));
 add(node, num, body, end);
@@ -2376,7 +2393,7 @@ pub.id ? allCoursesLink(pub) : null);
 updateStale(ent);
 page.title = T.titleCourse(c.title || T.untitled, pub.name);
 document.title = page.title;
-setupCta(buyBar(c, t), false);
+setupCta(buyBar(c, t, m.lessons), false);
 finish();
 handleLesson(ent, r);
 }
@@ -2426,11 +2443,12 @@ grab.setAttribute('aria-hidden', 'true');
 var nb = function (v) { return money(v) + ' ' + T.currency.replace(' ', ' '); };
 var price = c && c.price > 0 ? nb(discounted(c) ? c.priceNow : c.price) : '';
 var own = !price && l.price > 0 ? nb(l.price) : '';
-var kicker = add(el('p', 'sheet-kicker'), icon('lock'),
-el('span', '', price ? T.lockedKicker : own ? T.ownKicker : T.appKicker));
+var onlyApp = l.appOnly === true;
+var kicker = add(el('p', 'sheet-kicker'), icon(onlyApp ? 'phone' : 'lock'),
+el('span', '', onlyApp ? T.appOnlyKicker : price ? T.lockedKicker : own ? T.ownKicker : T.appKicker));
 var title = elAuto('h2', 'sheet-title', l.title || T.lessonN(l.n));
 title.id = 'sheetTitle';
-var text = el('p', 'sheet-text', l.avail === false ? T.unavailable
+var text = el('p', 'sheet-text', l.avail === false ? T.unavailable : onlyApp ? T.appOnlyText
 : price ? (IS_IOS ? T.lockedIos(price) : T.lockedPrice(price))
 : own && !IS_IOS ? T.lockedOwn(own) : T.lockedText);
 text.id = 'sheetText';
@@ -2444,7 +2462,7 @@ document.createTextNode(T.sheetTryFree));
 tryFree.addEventListener('click', function () { closeSheet(false); });
 }
 var btns = el('div', 'sheet-buttons');
-var openB = openButton(currentTarget(), c ? buyLabel(c) : T.open, 'btn-primary btn-block');
+var openB = openButton(currentTarget(), c && !onlyApp ? buyLabel(c) : T.open, 'btn-primary btn-block');
 openB.addEventListener('click', function () { closeSheet(false); });
 var dl = canOfferDownload() ? downloadButton(T.download, 'btn-outline btn-block') : null;
 if (dl) dl.addEventListener('click', function () { closeSheet(false); });
@@ -2553,42 +2571,11 @@ var shell = viewerShell(lesson, ctx);
 host.appendChild(shell.root);
 var body = shell.body;
 var src = videoSource(lesson.url);
-var frame = null;
 var vid = null;
 if (src.type === 'yt') {
-var box = el('div', 'v-box');
-var thumb = el('img', 'v-thumb');
-thumb.alt = '';
-thumb.setAttribute('decoding', 'async');
-thumb.setAttribute('referrerpolicy', 'no-referrer');
-thumb.addEventListener('error', function () { detach(thumb); });
-thumb.src = 'https://i.ytimg.com/vi/' + src.id + '/mqdefault.jpg';
-var play = el('button', 'v-play');
-play.type = 'button';
-play.setAttribute('aria-label', T.playVideo);
-play.appendChild(icon('play'));
-play.addEventListener('click', function () {
-frame = document.createElement('iframe');
-frame.className = 'v-frame';
-frame.title = lesson.displayTitle;
-frame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
-if (!('allow' in frame)) frame.setAttribute('allowfullscreen', '');
-frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-frame.src = 'https://www.youtube-nocookie.com/embed/' + src.id +
-'?autoplay=1&rel=0&modestbranding=1&playsinline=1';
-clear(box);
-box.appendChild(frame);
-focusNoScroll(frame);
-});
-add(box, thumb, play);
-var yt = el('a', 'btn btn-outline btn-block', '');
-yt.href = 'https://www.youtube.com/watch?v=' + src.id;
-yt.target = '_blank';
-yt.rel = 'noopener noreferrer';
-add(yt, icon('open'), el('span', '', T.openYoutube));
-add(body, box, add(el('div', 'v-info'),
+add(body, add(el('div', 'v-info'),
 elAuto('h2', 'v-title', lesson.displayTitle),
-el('p', 'v-note', T.videoOnYoutube)), add(el('div', 'v-actions'), yt));
+el('p', 'v-note', T.videoOnYoutube)));
 } else if (src.type === 'file') {
 var vbox = el('div', 'v-box');
 vid = document.createElement('video');
@@ -2624,10 +2611,6 @@ canOfferDownload() ? downloadButton(T.download, 'btn-outline btn-block') : null)
 if (src.type !== 'app') body.appendChild(more);
 return {
 destroy: function () {
-if (frame) {
-detach(frame);
-frame = null;
-}
 if (vid) {
 try {
 vid.pause();
@@ -2697,6 +2680,7 @@ title: l.title,
 displayTitle: l.title || T.lessonN(l.n || 1),
 kind: l.kind,
 url: l.url,
+access: l.access,
 pages: l.pages,
 minutes: l.minutes,
 questions: l.questions,

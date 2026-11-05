@@ -1425,6 +1425,13 @@ html[data-page="publisher"] .topbar {
   line-height: 1.8;
 }
 
+/* مجاني محمي: بالتطبيق بس (مو مقفول) */
+.row-app {
+  background: var(--line-2);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
 .row-lock {
   width: 17px;
   height: 17px;

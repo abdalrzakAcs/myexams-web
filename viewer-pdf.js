@@ -33,6 +33,8 @@ open: 'افتح بالتطبيق',
 retry: 'إعادة المحاولة',
 zoomIn: 'كبّر',
 zoomOut: 'صغّر',
+download: 'نزّل الملف',
+dlFailed: 'ما قدرنا ننزّل الملف — جرّب مرّة تانية.',
 pages: 'صفحات الملف',
 untitled: 'ملف',
 pageOf: function (c, t) { return 'صفحة ' + c + ' من ' + t; },
@@ -117,7 +119,7 @@ lat: 0, bps: 0, fetchSize: FETCH_DEFAULT,
 reqs: [], timers: [], failed: [], retryFn: null,
 pages: [], live: {}, job: null, vis: null, cur: -1, zoomIdx: 0, W: 0, lastCw: 0,
 first: false, raf: 0, rafIsTimer: false, resizeT: 0, slowI: 0, lastProgress: 0,
-io: null, load: null,
+io: null, load: null, dlBusy: false,
 stats: { mode: '', requests: 0, ranges: 0, bytes: 0, firstPageBytes: 0, firstPageMs: 0, startedAt: new Date().getTime() },
 trace: [],
 };
@@ -146,7 +148,16 @@ var pill = M.el('div', 'vp-pill');
 pill.setAttribute('role', 'status');
 pill.setAttribute('aria-live', 'off');
 pill.hidden = true;
-M.add(bar, back, titles, pill);
+var dlBtn = null;
+if (lesson.access === 'free_open') {
+dlBtn = M.el('button', 'mec-back mec-back-dark vp-dl');
+dlBtn.type = 'button';
+dlBtn.setAttribute('aria-label', TXT.download);
+dlBtn.title = TXT.download;
+dlBtn.appendChild(M.icon('download'));
+dlBtn.addEventListener('click', download, false);
+}
+M.add(bar, back, titles, pill, dlBtn);
 var body = M.el('div', 'vp-body');
 var scroller = M.el('div', 'vp-scroll');
 scroller.tabIndex = 0;
@@ -175,6 +186,39 @@ b.title = label;
 b.appendChild(svgIcon(d));
 b.addEventListener('click', function () { if (!S.dead) fn(); });
 return b;
+}
+function fileName() {
+var t = String(lesson.title || lesson.displayTitle || TXT.untitled)
+.replace(/[\\\/:*?"<>|\u0000-\u001f\u007f‎‏‪-‮⁦-⁩]+/g, ' ')
+.replace(/\s+/g, ' ').replace(/^[\s.]+|[\s.]+$/g, '');
+if (t.length > 80) t = t.slice(0, 80).replace(/[\s.]+$/, '');
+if (!t) t = TXT.untitled;
+return /\.pdf$/i.test(t) ? t : t + '.pdf';
+}
+function download() {
+if (S.dead || S.dlBusy) return;
+S.dlBusy = true;
+dlBtn.disabled = true;
+var p = S.url && now() - S.signedAt < 1800000 ? Promise.resolve(S.url)
+: M.api.signPdf(String(lesson.url || '').replace(/^\s+|\s+$/g, ''), 3600);
+p.then(function (u) {
+if (S.dead) return;
+u = String(u || '');
+if (!/^https:\/\/\S+$/i.test(u)) throw kindErr('bad', 'sign');
+var name = fileName();
+var a = document.createElement('a');
+a.href = u + (u.indexOf('?') >= 0 ? '&' : '?') + 'download=' + encodeURIComponent(name);
+a.setAttribute('download', name);
+a.style.display = 'none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+}).catch(function () {
+if (!S.dead) M.ui.toast(TXT.dlFailed, 'err');
+}).then(function () {
+S.dlBusy = false;
+if (dlBtn) dlBtn.disabled = false;
+});
 }
 function onScroll() { schedule(); }
 function onCtx(e) { if (e && e.preventDefault) e.preventDefault(); }

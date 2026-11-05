@@ -106,6 +106,14 @@
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
+/* زر التنزيل (مجاني غير محمي) — شكل زر الرجوع نفسه */
+.vp-dl {
+  margin-right: 8px;
+}
+.vp-dl:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 .vp-titles {
   -webkit-box-flex: 1;
   -webkit-flex: 1 1 auto;
